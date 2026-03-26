@@ -58,12 +58,12 @@ function App() {
       {/* Main Grid */}
       <main className="p-3 sm:p-4 md:p-6 grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 lg:grid-cols-2">
         <StockPanel />
-        <CurrencyPanel />
+        <LinksPanel />
         <div className="lg:col-span-2">
           <TranslatePanel />
         </div>
         <div className="lg:col-span-2">
-          <LinksPanel />
+          <CurrencyPanel />
         </div>
       </main>
     </div>

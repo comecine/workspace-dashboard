@@ -2,23 +2,25 @@ import { useState, useEffect, useRef } from 'react'
 
 const API_URL = 'https://api.mymemory.translated.net/get'
 
-function detectLang(text) {
-  const cjkRegex = /[\u4e00-\u9fff\u3400-\u4dbf]/
-  return cjkRegex.test(text) ? 'zh' : 'en'
-}
+const LANG_OPTIONS = [
+  { code: 'zh-TW', label: '中文' },
+  { code: 'en', label: 'English' },
+  { code: 'ja', label: '日本語' },
+  { code: 'ko', label: '한국어' },
+]
 
 export default function TranslatePanel() {
   const [sourceText, setSourceText] = useState('')
   const [translatedText, setTranslatedText] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [detectedDir, setDetectedDir] = useState('ZH -> EN')
+  const [sourceLang, setSourceLang] = useState('zh-TW')
+  const [targetLang, setTargetLang] = useState('en')
   const debounceRef = useRef(null)
 
   useEffect(() => {
     if (!sourceText.trim()) {
       setTranslatedText('')
-      setDetectedDir('ZH -> EN')
       return
     }
 
@@ -28,12 +30,8 @@ export default function TranslatePanel() {
       setLoading(true)
       setError(null)
 
-      const sourceLang = detectLang(sourceText)
-      const targetLang = sourceLang === 'zh' ? 'en' : 'zh-TW'
-      setDetectedDir(sourceLang === 'zh' ? 'ZH -> EN' : 'EN -> ZH')
-
       try {
-        const langpair = `${sourceLang === 'zh' ? 'zh-TW' : 'en'}|${targetLang}`
+        const langpair = `${sourceLang}|${targetLang}`
         const params = new URLSearchParams({ q: sourceText, langpair })
         const res = await fetch(`${API_URL}?${params}`)
 
@@ -54,7 +52,14 @@ export default function TranslatePanel() {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
-  }, [sourceText])
+  }, [sourceText, sourceLang, targetLang])
+
+  const swapLanguages = () => {
+    setSourceLang(targetLang)
+    setTargetLang(sourceLang)
+    setSourceText(translatedText)
+    setTranslatedText(sourceText)
+  }
 
   const copyResult = async () => {
     if (translatedText) {
@@ -74,15 +79,46 @@ export default function TranslatePanel() {
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <span className="text-violet-500 dark:text-violet-400">A</span> Translate
         </h2>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-500 font-mono">{detectedDir}</span>
-          <button
-            onClick={clearAll}
-            className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-          >
-            Clear
-          </button>
-        </div>
+        <button
+          onClick={clearAll}
+          className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+        >
+          Clear
+        </button>
+      </div>
+
+      {/* Language selector row */}
+      <div className="flex items-center gap-2 mb-3">
+        <select
+          value={sourceLang}
+          onChange={(e) => setSourceLang(e.target.value)}
+          className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-violet-500"
+        >
+          {LANG_OPTIONS.map((l) => (
+            <option key={l.code} value={l.code}>{l.label}</option>
+          ))}
+        </select>
+
+        <button
+          onClick={swapLanguages}
+          className="text-gray-400 hover:text-violet-500 dark:hover:text-violet-400 transition-colors p-1.5"
+          title="Swap languages"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M8 7a1 1 0 011-1h6a1 1 0 110 2H9a1 1 0 01-1-1zm-4 6a1 1 0 011-1h6a1 1 0 110 2H5a1 1 0 01-1-1z" clipRule="evenodd" />
+            <path d="M14.707 4.293a1 1 0 010 1.414L13.414 7l1.293 1.293a1 1 0 01-1.414 1.414l-2-2a1 1 0 010-1.414l2-2a1 1 0 011.414 0zM5.293 15.707a1 1 0 010-1.414L6.586 13l-1.293-1.293a1 1 0 011.414-1.414l2 2a1 1 0 010 1.414l-2 2a1 1 0 01-1.414 0z" />
+          </svg>
+        </button>
+
+        <select
+          value={targetLang}
+          onChange={(e) => setTargetLang(e.target.value)}
+          className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-violet-500"
+        >
+          {LANG_OPTIONS.map((l) => (
+            <option key={l.code} value={l.code}>{l.label}</option>
+          ))}
+        </select>
       </div>
 
       {error && (
@@ -96,7 +132,7 @@ export default function TranslatePanel() {
           <textarea
             value={sourceText}
             onChange={(e) => setSourceText(e.target.value)}
-            placeholder="Enter text to translate (auto-detect Chinese/English)..."
+            placeholder="Enter text to translate..."
             className="w-full h-40 sm:h-48 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-3 sm:p-4 text-sm resize-none focus:outline-none focus:border-violet-500 placeholder-gray-400 dark:placeholder-gray-500"
           />
           <div className="absolute bottom-3 right-3 text-xs text-gray-400 dark:text-gray-600">
