@@ -66,7 +66,7 @@ export default function CurrencyPanel() {
     setToCurrency(fromCurrency)
   }
 
-  const currencies = ['USD', 'TWD', 'CNY']
+  const currencies = ['USD', 'TWD', 'CNY', 'JPY', 'EUR', 'HKD', 'SGD', 'KRW', 'GBP']
 
   return (
     <section className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-5">

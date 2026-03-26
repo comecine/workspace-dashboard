@@ -10,7 +10,7 @@ export default function LinksPanel() {
     const saved = localStorage.getItem('work_links')
     return saved ? JSON.parse(saved) : DEFAULT_LINKS
   })
-  const [editing, setEditing] = useState(null) // link id being edited
+  const [editing, setEditing] = useState(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({ name: '', url: '', icon: '' })
 
@@ -60,7 +60,7 @@ export default function LinksPanel() {
   }
 
   return (
-    <section className="bg-gray-900 dark:bg-gray-900 rounded-xl border border-gray-800 dark:border-gray-800 p-5">
+    <section className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <span className="text-orange-400">@</span> Quick Links
@@ -75,22 +75,22 @@ export default function LinksPanel() {
 
       {/* Add/Edit Form */}
       {showAdd && (
-        <div className="bg-gray-800/50 dark:bg-gray-800/50 rounded-lg p-3 mb-4 space-y-2">
+        <div className="bg-gray-100 dark:bg-gray-800/50 rounded-lg p-3 mb-4 space-y-2">
           <div className="flex gap-2">
             <input
               type="text"
               value={form.icon}
               onChange={(e) => setForm({ ...form, icon: e.target.value })}
-              placeholder="Icon (1-2 chars)"
+              placeholder="Icon"
               maxLength={2}
-              className="w-16 bg-gray-800 dark:bg-gray-700 border border-gray-700 dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:border-orange-500"
+              className="w-16 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:border-orange-500"
             />
             <input
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="Name"
-              className="flex-1 bg-gray-800 dark:bg-gray-700 border border-gray-700 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-orange-500"
+              className="flex-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-orange-500"
             />
           </div>
           <div className="flex gap-2">
@@ -100,7 +100,7 @@ export default function LinksPanel() {
               onChange={(e) => setForm({ ...form, url: e.target.value })}
               onKeyDown={(e) => e.key === 'Enter' && (editing ? updateLink() : addLink())}
               placeholder="https://..."
-              className="flex-1 bg-gray-800 dark:bg-gray-700 border border-gray-700 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-orange-500"
+              className="flex-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-orange-500"
             />
             <button
               onClick={editing ? updateLink : addLink}
@@ -120,24 +120,24 @@ export default function LinksPanel() {
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2.5 bg-gray-800/50 dark:bg-gray-800/50 hover:bg-gray-800 dark:hover:bg-gray-700 rounded-lg p-3 transition-colors"
+              className="flex items-center gap-2.5 bg-gray-100 dark:bg-gray-800/50 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg p-3 transition-colors"
             >
-              <div className="w-8 h-8 rounded-lg bg-orange-600/20 text-orange-400 flex items-center justify-center text-xs font-bold shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-orange-600/20 text-orange-500 dark:text-orange-400 flex items-center justify-center text-xs font-bold shrink-0">
                 {link.icon}
               </div>
               <span className="text-sm truncate">{link.name}</span>
             </a>
-            <div className="absolute top-1 right-1 hidden group-hover:flex gap-0.5">
+            <div className="absolute top-1 right-1 flex sm:hidden sm:group-hover:flex gap-0.5">
               <button
                 onClick={(e) => { e.preventDefault(); startEdit(link) }}
-                className="w-5 h-5 rounded bg-gray-700 text-gray-400 hover:text-blue-400 text-xs flex items-center justify-center"
+                className="w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 text-xs flex items-center justify-center"
                 title="Edit"
               >
                 e
               </button>
               <button
                 onClick={(e) => { e.preventDefault(); removeLink(link.id) }}
-                className="w-5 h-5 rounded bg-gray-700 text-gray-400 hover:text-red-400 text-xs flex items-center justify-center"
+                className="w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 text-xs flex items-center justify-center"
                 title="Delete"
               >
                 x
@@ -148,8 +148,8 @@ export default function LinksPanel() {
       </div>
 
       {links.length === 0 && (
-        <div className="text-center text-gray-600 text-sm py-6">
-          No links yet. Click "+ Add" to add your first link.
+        <div className="text-center text-gray-400 dark:text-gray-600 text-sm py-6">
+          還沒有連結，點擊「+ Add」新增第一個連結
         </div>
       )}
     </section>

@@ -16,6 +16,7 @@ export default function TranslatePanel() {
   const [error, setError] = useState(null)
   const [sourceLang, setSourceLang] = useState('zh-TW')
   const [targetLang, setTargetLang] = useState('en')
+  const [copied, setCopied] = useState(false)
   const debounceRef = useRef(null)
 
   useEffect(() => {
@@ -64,6 +65,8 @@ export default function TranslatePanel() {
   const copyResult = async () => {
     if (translatedText) {
       await navigator.clipboard.writeText(translatedText)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
     }
   }
 
@@ -102,7 +105,7 @@ export default function TranslatePanel() {
         <button
           onClick={swapLanguages}
           className="text-gray-400 hover:text-violet-500 dark:hover:text-violet-400 transition-colors p-1.5"
-          title="Swap languages"
+          title="交換語言"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M8 7a1 1 0 011-1h6a1 1 0 110 2H9a1 1 0 01-1-1zm-4 6a1 1 0 011-1h6a1 1 0 110 2H5a1 1 0 01-1-1z" clipRule="evenodd" />
@@ -132,7 +135,7 @@ export default function TranslatePanel() {
           <textarea
             value={sourceText}
             onChange={(e) => setSourceText(e.target.value)}
-            placeholder="Enter text to translate..."
+            placeholder="輸入要翻譯的文字..."
             className="w-full h-40 sm:h-48 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-3 sm:p-4 text-sm resize-none focus:outline-none focus:border-violet-500 placeholder-gray-400 dark:placeholder-gray-500"
           />
           <div className="absolute bottom-3 right-3 text-xs text-gray-400 dark:text-gray-600">
@@ -145,26 +148,26 @@ export default function TranslatePanel() {
             {loading ? (
               <div className="flex items-center gap-2 text-gray-500">
                 <div className="w-4 h-4 border-2 border-violet-500 dark:border-violet-400 border-t-transparent rounded-full animate-spin" />
-                Translating...
+                翻譯中...
               </div>
             ) : (
-              translatedText || <span className="text-gray-400 dark:text-gray-600">Translation will appear here...</span>
+              translatedText || <span className="text-gray-400 dark:text-gray-600">翻譯結果會顯示在這裡...</span>
             )}
           </div>
           {translatedText && (
             <button
               onClick={copyResult}
-              className="absolute bottom-3 right-3 text-xs text-gray-500 hover:text-violet-500 dark:hover:text-violet-400 transition-colors"
-              title="Copy result"
+              className={`absolute bottom-3 right-3 text-xs transition-colors ${copied ? 'text-emerald-500' : 'text-gray-500 hover:text-violet-500 dark:hover:text-violet-400'}`}
+              title="複製結果"
             >
-              Copy
+              {copied ? 'Copied!' : 'Copy'}
             </button>
           )}
         </div>
       </div>
 
       <div className="mt-3 text-xs text-gray-400 dark:text-gray-600">
-        Powered by MyMemory Translation API (free, no key required)
+        使用 MyMemory Translation API（免費，不需 API Key）
       </div>
     </section>
   )

@@ -42,8 +42,9 @@ function App() {
           <time className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-mono hidden sm:block">{timeStr}</time>
           <button
             onClick={() => setDark(!dark)}
-            className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 flex items-center justify-center transition-colors text-sm"
-            title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="w-9 h-9 rounded-lg bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 flex items-center justify-center transition-colors text-base"
+            title={dark ? '切換為亮色模式' : '切換為暗色模式'}
+            aria-label={dark ? '切換為亮色模式' : '切換為暗色模式'}
           >
             {dark ? '\u2600' : '\u263E'}
           </button>
