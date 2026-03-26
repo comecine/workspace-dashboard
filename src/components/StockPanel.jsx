@@ -74,7 +74,7 @@ function MiniChart({ symbol }) {
             (a, b) => new Date(a.date) - new Date(b.date)
           )
           const chartData = sorted.map((c) => ({
-            time: Math.floor(new Date(c.date).getTime() / 1000),
+            time: Math.floor(new Date(c.date).getTime() / 1000) + 8 * 3600,
             value: c.close,
           }))
           if (chartData.length > 0) {
