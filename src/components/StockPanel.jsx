@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { createChart, LineSeries } from 'lightweight-charts'
+import { useState, useEffect, useCallback } from 'react'
 import { getStockUrl, getStockHeaders, hasStockKey } from '../api'
 
 function useStockApi(endpoint) {
@@ -36,79 +35,6 @@ function useStockApi(endpoint) {
   }, [fetchData])
 
   return { data, loading, error, refetch: fetchData }
-}
-
-function MiniChart({ symbol }) {
-  const containerRef = useRef(null)
-
-  useEffect(() => {
-    if (!containerRef.current || !hasStockKey()) return
-
-    const isDark = document.documentElement.classList.contains('dark')
-
-    const chart = createChart(containerRef.current, {
-      width: containerRef.current.clientWidth,
-      height: 120,
-      layout: { background: { color: 'transparent' }, textColor: isDark ? '#9ca3af' : '#6b7280' },
-      grid: { vertLines: { visible: false }, horzLines: { color: isDark ? '#1f2937' : '#e5e7eb' } },
-      rightPriceScale: { borderVisible: false },
-      timeScale: { borderVisible: false, timeVisible: true, secondsVisible: false },
-      crosshair: { mode: 0 },
-    })
-
-    const lineSeries = chart.addSeries(LineSeries, {
-      color: '#10b981',
-      lineWidth: 2,
-    })
-
-    async function fetchCandles() {
-      try {
-        const res = await fetch(
-          getStockUrl(`intraday/candles/${symbol}?timeframe=5`),
-          { headers: getStockHeaders() }
-        )
-        if (!res.ok) return
-        const json = await res.json()
-        if (json.data) {
-          const sorted = [...json.data].sort(
-            (a, b) => new Date(a.date) - new Date(b.date)
-          )
-          const chartData = sorted.map((c) => ({
-            time: Math.floor(new Date(c.date).getTime() / 1000) + 8 * 3600,
-            value: c.close,
-          }))
-          if (chartData.length > 0) {
-            lineSeries.setData(chartData)
-            const firstClose = chartData[0].value
-            const lastClose = chartData[chartData.length - 1].value
-            lineSeries.applyOptions({
-              color: lastClose >= firstClose ? '#10b981' : '#ef4444',
-            })
-          }
-        }
-      } catch {
-        // silently ignore chart fetch errors
-      }
-    }
-
-    fetchCandles()
-
-    const handleResize = () => {
-      if (containerRef.current) {
-        chart.applyOptions({ width: containerRef.current.clientWidth })
-      }
-    }
-    window.addEventListener('resize', handleResize)
-
-    return () => {
-      window.removeEventListener('resize', handleResize)
-      chart.remove()
-    }
-  }, [symbol])
-
-  if (!hasStockKey()) return null
-
-  return <div ref={containerRef} className="w-full mt-2" />
 }
 
 function StockCard({ symbol, onRemove }) {
@@ -148,7 +74,7 @@ function StockCard({ symbol, onRemove }) {
           </div>
           <div className="flex items-baseline gap-3 mt-1">
             <span className="text-2xl font-bold">{price}</span>
-            <span className={`text-sm font-medium ${isUp ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+            <span className={`text-sm font-medium ${isUp ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
               {isUp ? '+' : ''}{change} ({isUp ? '+' : ''}{changePercent}%)
             </span>
           </div>
@@ -161,7 +87,6 @@ function StockCard({ symbol, onRemove }) {
           x
         </button>
       </div>
-      <MiniChart symbol={symbol} />
     </div>
   )
 }
@@ -197,11 +122,10 @@ function TaiexCard() {
       <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">TAIEX</div>
       <div className="flex items-baseline gap-3">
         <span className="text-3xl font-bold">{price}</span>
-        <span className={`text-sm font-medium ${isUp ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+        <span className={`text-sm font-medium ${isUp ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
           {isUp ? '+' : ''}{change} ({isUp ? '+' : ''}{changePercent}%)
         </span>
       </div>
-      <MiniChart symbol="IX0001" />
     </div>
   )
 }
