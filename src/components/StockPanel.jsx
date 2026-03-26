@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createChart, LineSeries } from 'lightweight-charts'
-
-const API_KEY = import.meta.env.VITE_FUGLE_API_KEY
-const BASE_URL = 'https://api.fugle.tw/marketdata/v1.0/stock'
+import { getStockUrl, getStockHeaders, hasStockKey } from '../api'
 
 function useStockApi(endpoint) {
   const [data, setData] = useState(null)
@@ -10,15 +8,15 @@ function useStockApi(endpoint) {
   const [error, setError] = useState(null)
 
   const fetchData = useCallback(async () => {
-    if (!API_KEY) {
-      setError('Missing VITE_FUGLE_API_KEY')
+    if (!hasStockKey()) {
+      setError('Missing stock API config')
       setLoading(false)
       return
     }
     try {
       setLoading(true)
-      const res = await fetch(`${BASE_URL}${endpoint}`, {
-        headers: { 'X-API-KEY': API_KEY },
+      const res = await fetch(getStockUrl(endpoint), {
+        headers: getStockHeaders(),
       })
       if (!res.ok) throw new Error(`API ${res.status}`)
       const json = await res.json()
@@ -44,7 +42,7 @@ function MiniChart({ symbol }) {
   const containerRef = useRef(null)
 
   useEffect(() => {
-    if (!containerRef.current || !API_KEY) return
+    if (!containerRef.current || !hasStockKey()) return
 
     const isDark = document.documentElement.classList.contains('dark')
 
@@ -66,8 +64,8 @@ function MiniChart({ symbol }) {
     async function fetchCandles() {
       try {
         const res = await fetch(
-          `${BASE_URL}/intraday/candles/${symbol}?timeframe=5`,
-          { headers: { 'X-API-KEY': API_KEY } }
+          getStockUrl(`intraday/candles/${symbol}?timeframe=5`),
+          { headers: getStockHeaders() }
         )
         if (!res.ok) return
         const json = await res.json()
@@ -108,7 +106,7 @@ function MiniChart({ symbol }) {
     }
   }, [symbol])
 
-  if (!API_KEY) return null
+  if (!hasStockKey()) return null
 
   return <div ref={containerRef} className="w-full mt-2" />
 }
@@ -262,7 +260,7 @@ export default function StockPanel() {
         ))}
       </div>
 
-      {!API_KEY && (
+      {!hasStockKey() && (
         <div className="mt-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700/50 rounded-lg p-3 text-sm text-yellow-700 dark:text-yellow-300">
           Please set VITE_FUGLE_API_KEY in .env to enable stock data.
         </div>

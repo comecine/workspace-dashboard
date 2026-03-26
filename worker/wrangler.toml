@@ -1,0 +1,7 @@
+name = "workspace-dashboard-api"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+account_id = "01a543f1afca24d791ba7b5d1f0014c2"
+
+[vars]
+ALLOWED_ORIGIN = "https://workspace-dashboard.pages.dev"

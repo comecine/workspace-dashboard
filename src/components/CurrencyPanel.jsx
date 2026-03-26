@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-
-const API_KEY = import.meta.env.VITE_EXCHANGE_RATE_API_KEY
-const BASE_URL = `https://v6.exchangerate-api.com/v6`
+import { getExchangeRateUrl, hasExchangeRateKey } from '../api'
 
 const PAIRS = [
   { from: 'USD', to: 'TWD', label: 'USD / TWD' },
@@ -20,14 +18,14 @@ export default function CurrencyPanel() {
   const [convertedAmount, setConvertedAmount] = useState(null)
 
   const fetchRates = useCallback(async () => {
-    if (!API_KEY) {
-      setError('Missing VITE_EXCHANGE_RATE_API_KEY')
+    if (!hasExchangeRateKey()) {
+      setError('Missing exchange rate API config')
       setLoading(false)
       return
     }
     try {
       setLoading(true)
-      const res = await fetch(`${BASE_URL}/${API_KEY}/latest/USD`)
+      const res = await fetch(getExchangeRateUrl())
       if (!res.ok) throw new Error(`API ${res.status}`)
       const json = await res.json()
       if (json.result !== 'success') throw new Error(json['error-type'] || 'API error')
@@ -158,7 +156,7 @@ export default function CurrencyPanel() {
         </div>
       </div>
 
-      {!API_KEY && (
+      {!hasExchangeRateKey() && (
         <div className="mt-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700/50 rounded-lg p-3 text-sm text-yellow-700 dark:text-yellow-300">
           Please set VITE_EXCHANGE_RATE_API_KEY in .env to enable exchange rates.
         </div>
