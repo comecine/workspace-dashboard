@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 
-const API_KEY = import.meta.env.VITE_DEEPL_API_KEY
-const API_URL = 'https://api-free.deepl.com/v2/translate'
+// MyMemory API - free, no key required
+const API_URL = 'https://api.mymemory.translated.net/get'
 
 function detectLang(text) {
-  // Simple heuristic: if text contains CJK characters, it's Chinese
   const cjkRegex = /[\u4e00-\u9fff\u3400-\u4dbf]/
-  return cjkRegex.test(text) ? 'ZH' : 'EN'
+  return cjkRegex.test(text) ? 'zh' : 'en'
 }
 
 export default function TranslatePanel() {
@@ -24,11 +23,6 @@ export default function TranslatePanel() {
       return
     }
 
-    if (!API_KEY) {
-      setError('Missing VITE_DEEPL_API_KEY')
-      return
-    }
-
     if (debounceRef.current) clearTimeout(debounceRef.current)
 
     debounceRef.current = setTimeout(async () => {
@@ -36,26 +30,24 @@ export default function TranslatePanel() {
       setError(null)
 
       const sourceLang = detectLang(sourceText)
-      const targetLang = sourceLang === 'ZH' ? 'EN' : 'ZH-HANT'
-      setDetectedDir(sourceLang === 'ZH' ? 'ZH -> EN' : 'EN -> ZH')
+      const targetLang = sourceLang === 'zh' ? 'en' : 'zh-TW'
+      setDetectedDir(sourceLang === 'zh' ? 'ZH -> EN' : 'EN -> ZH')
 
       try {
-        const res = await fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `DeepL-Auth-Key ${API_KEY}` },
-          body: JSON.stringify({
-            text: [sourceText],
-            target_lang: targetLang,
-          }),
+        const langpair = `${sourceLang === 'zh' ? 'zh-TW' : 'en'}|${targetLang}`
+        const params = new URLSearchParams({
+          q: sourceText,
+          langpair,
         })
+        const res = await fetch(`${API_URL}?${params}`)
 
-        if (!res.ok) {
-          const errBody = await res.text()
-          throw new Error(`DeepL API ${res.status}: ${errBody}`)
-        }
+        if (!res.ok) throw new Error(`API ${res.status}`)
 
         const json = await res.json()
-        setTranslatedText(json.translations?.[0]?.text ?? '')
+        if (json.responseStatus !== 200) {
+          throw new Error(json.responseDetails || 'Translation failed')
+        }
+        setTranslatedText(json.responseData?.translatedText ?? '')
       } catch (e) {
         setError(e.message)
       } finally {
@@ -141,11 +133,9 @@ export default function TranslatePanel() {
         </div>
       </div>
 
-      {!API_KEY && (
-        <div className="mt-4 bg-yellow-900/30 border border-yellow-700/50 rounded-lg p-3 text-sm text-yellow-300">
-          Please set VITE_DEEPL_API_KEY in .env to enable translation.
-        </div>
-      )}
+      <div className="mt-3 text-xs text-gray-600">
+        Powered by MyMemory Translation API (free, no key required)
+      </div>
     </section>
   )
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { createChart } from 'lightweight-charts'
+import { createChart, LineSeries } from 'lightweight-charts'
 
 const API_KEY = import.meta.env.VITE_FUGLE_API_KEY
 const BASE_URL = 'https://api.fugle.tw/marketdata/v1.0/stock'
@@ -57,7 +57,7 @@ function MiniChart({ symbol }) {
       crosshair: { mode: 0 },
     })
 
-    const lineSeries = chart.addSeries('Line', {
+    const lineSeries = chart.addSeries(LineSeries, {
       color: '#10b981',
       lineWidth: 2,
     })
