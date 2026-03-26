@@ -41,17 +41,18 @@ function useStockApi(endpoint) {
 }
 
 function MiniChart({ symbol }) {
-  const chartRef = useRef(null)
   const containerRef = useRef(null)
 
   useEffect(() => {
     if (!containerRef.current || !API_KEY) return
 
+    const isDark = document.documentElement.classList.contains('dark')
+
     const chart = createChart(containerRef.current, {
       width: containerRef.current.clientWidth,
       height: 120,
-      layout: { background: { color: 'transparent' }, textColor: '#9ca3af' },
-      grid: { vertLines: { visible: false }, horzLines: { color: '#1f2937' } },
+      layout: { background: { color: 'transparent' }, textColor: isDark ? '#9ca3af' : '#6b7280' },
+      grid: { vertLines: { visible: false }, horzLines: { color: isDark ? '#1f2937' : '#e5e7eb' } },
       rightPriceScale: { borderVisible: false },
       timeScale: { borderVisible: false, timeVisible: true, secondsVisible: false },
       crosshair: { mode: 0 },
@@ -61,8 +62,6 @@ function MiniChart({ symbol }) {
       color: '#10b981',
       lineWidth: 2,
     })
-
-    chartRef.current = chart
 
     async function fetchCandles() {
       try {
@@ -119,16 +118,16 @@ function StockCard({ symbol, onRemove }) {
 
   if (loading) {
     return (
-      <div className="bg-gray-800/50 rounded-lg p-4 animate-pulse">
-        <div className="h-4 bg-gray-700 rounded w-20 mb-2" />
-        <div className="h-6 bg-gray-700 rounded w-24" />
+      <div className="bg-gray-200/50 dark:bg-gray-800/50 rounded-lg p-4 animate-pulse">
+        <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-20 mb-2" />
+        <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-24" />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="bg-gray-800/50 rounded-lg p-4 text-red-400 text-sm">
+      <div className="bg-gray-200/50 dark:bg-gray-800/50 rounded-lg p-4 text-red-500 dark:text-red-400 text-sm">
         {symbol}: {error}
       </div>
     )
@@ -142,23 +141,23 @@ function StockCard({ symbol, onRemove }) {
   const isUp = change >= 0
 
   return (
-    <div className="bg-gray-800/50 rounded-lg p-4 hover:bg-gray-800 transition-colors">
+    <div className="bg-gray-200/50 dark:bg-gray-800/50 rounded-lg p-4 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-400">{symbol}</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">{symbol}</span>
             <span className="text-sm font-medium">{name}</span>
           </div>
           <div className="flex items-baseline gap-3 mt-1">
             <span className="text-2xl font-bold">{price}</span>
-            <span className={`text-sm font-medium ${isUp ? 'text-emerald-400' : 'text-red-400'}`}>
+            <span className={`text-sm font-medium ${isUp ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
               {isUp ? '+' : ''}{change} ({isUp ? '+' : ''}{changePercent}%)
             </span>
           </div>
         </div>
         <button
           onClick={() => onRemove(symbol)}
-          className="text-gray-600 hover:text-red-400 transition-colors text-lg leading-none"
+          className="text-gray-400 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors text-lg leading-none"
           title="Remove"
         >
           x
@@ -174,16 +173,16 @@ function TaiexCard() {
 
   if (loading) {
     return (
-      <div className="bg-gray-800/50 rounded-lg p-4 animate-pulse">
-        <div className="h-4 bg-gray-700 rounded w-24 mb-2" />
-        <div className="h-8 bg-gray-700 rounded w-32" />
+      <div className="bg-gray-200/50 dark:bg-gray-800/50 rounded-lg p-4 animate-pulse">
+        <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-24 mb-2" />
+        <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded w-32" />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="bg-gray-800/50 rounded-lg p-4 text-red-400 text-sm">
+      <div className="bg-gray-200/50 dark:bg-gray-800/50 rounded-lg p-4 text-red-500 dark:text-red-400 text-sm">
         Fetch TAIEX error: {error}
       </div>
     )
@@ -196,11 +195,11 @@ function TaiexCard() {
   const isUp = change >= 0
 
   return (
-    <div className="bg-gray-800/50 rounded-lg p-4">
-      <div className="text-sm text-gray-400 mb-1">TAIEX</div>
+    <div className="bg-gray-200/50 dark:bg-gray-800/50 rounded-lg p-4">
+      <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">TAIEX</div>
       <div className="flex items-baseline gap-3">
         <span className="text-3xl font-bold">{price}</span>
-        <span className={`text-sm font-medium ${isUp ? 'text-emerald-400' : 'text-red-400'}`}>
+        <span className={`text-sm font-medium ${isUp ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
           {isUp ? '+' : ''}{change} ({isUp ? '+' : ''}{changePercent}%)
         </span>
       </div>
@@ -233,9 +232,9 @@ export default function StockPanel() {
   }
 
   return (
-    <section className="bg-gray-900 rounded-xl border border-gray-800 p-5">
+    <section className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-5">
       <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <span className="text-emerald-400">$</span> Taiwan Stocks
+        <span className="text-emerald-500 dark:text-emerald-400">$</span> Taiwan Stocks
       </h2>
 
       <TaiexCard />
@@ -247,7 +246,7 @@ export default function StockPanel() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && addStock()}
           placeholder="Enter stock code, e.g. 2317"
-          className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 placeholder-gray-500"
+          className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 placeholder-gray-400 dark:placeholder-gray-500"
         />
         <button
           onClick={addStock}
@@ -264,7 +263,7 @@ export default function StockPanel() {
       </div>
 
       {!API_KEY && (
-        <div className="mt-4 bg-yellow-900/30 border border-yellow-700/50 rounded-lg p-3 text-sm text-yellow-300">
+        <div className="mt-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700/50 rounded-lg p-3 text-sm text-yellow-700 dark:text-yellow-300">
           Please set VITE_FUGLE_API_KEY in .env to enable stock data.
         </div>
       )}
