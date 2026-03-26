@@ -6,6 +6,7 @@ export default {
     // CORS: allow Pages domain + localhost dev
     const allowedOrigins = [
       env.ALLOWED_ORIGIN,
+      'https://work.wowcloud.tw',
       'http://localhost:5173',
       'http://localhost:4173',
     ];
