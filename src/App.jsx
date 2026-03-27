@@ -58,7 +58,7 @@ function WidgetGrid({ layouts, onLayoutChange }) {
           containerPadding={[0, 0]}
           onLayoutChange={onLayoutChange}
           draggableHandle=".widget-drag-handle"
-          resizeHandles={['se']}
+          resizeHandles={['se', 'e', 's']}
           useCSSTransforms={true}
           compactType="vertical"
         >
