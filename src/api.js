@@ -33,3 +33,49 @@ export function getExchangeRateUrl() {
 export function hasExchangeRateKey() {
   return !!WORKER_URL || !!import.meta.env.VITE_EXCHANGE_RATE_API_KEY
 }
+
+// Calendar API (Google Calendar via Apps Script → Worker proxy)
+export function getCalendarUrl() {
+  if (WORKER_URL) {
+    return `${WORKER_URL}/api/calendar`
+  }
+  // Dev mode: direct Apps Script URL
+  return import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL || ''
+}
+
+export function hasCalendarConfig() {
+  return !!WORKER_URL || !!import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL
+}
+
+export async function fetchCalendarEvents(days = 14) {
+  const base = getCalendarUrl()
+  if (!base) throw new Error('Calendar not configured')
+  const url = `${base}?action=list&days=${days}`
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`Calendar API ${res.status}`)
+  return res.json()
+}
+
+export async function createCalendarEvent(event) {
+  const base = getCalendarUrl()
+  if (!base) throw new Error('Calendar not configured')
+  const res = await fetch(base, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'create', ...event }),
+  })
+  if (!res.ok) throw new Error(`Calendar API ${res.status}`)
+  return res.json()
+}
+
+export async function deleteCalendarEvent(eventId) {
+  const base = getCalendarUrl()
+  if (!base) throw new Error('Calendar not configured')
+  const res = await fetch(base, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'delete', id: eventId }),
+  })
+  if (!res.ok) throw new Error(`Calendar API ${res.status}`)
+  return res.json()
+}
