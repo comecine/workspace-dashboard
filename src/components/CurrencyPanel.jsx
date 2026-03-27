@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { getExchangeRateUrl, hasExchangeRateKey } from '../api'
 
 const PAIRS = [
-  { from: 'USD', to: 'TWD', label: 'USD / TWD' },
-  { from: 'USD', to: 'CNY', label: 'USD / CNY' },
+  { from: 'USD', to: 'TWD', label: 'USD / TWD', symbol: 'NT$' },
+  { from: 'USD', to: 'CNY', label: 'USD / CNY', symbol: '¥' },
 ]
 
 export default function CurrencyPanel() {
@@ -68,14 +68,22 @@ export default function CurrencyPanel() {
 
   const currencies = ['USD', 'TWD', 'CNY', 'JPY', 'EUR', 'HKD', 'SGD', 'KRW', 'GBP']
 
+  const getCurrencySymbol = (code) => {
+    const map = { USD: '$', TWD: 'NT$', CNY: '¥', JPY: '¥', EUR: '€', HKD: 'HK$', SGD: 'S$', KRW: '₩', GBP: '£' }
+    return map[code] || code
+  }
+
   return (
-    <section className="glass-card rounded-xl p-4 sm:p-5">
+    <section className="glass-card card-stripe card-stripe-blue rounded-xl p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <span className="text-blue-500 dark:text-blue-400 text-xl glow-blue">$</span> Exchange Rates
         </h2>
         {lastUpdate && (
-          <span className="text-xs text-gray-500 dark:text-gray-500">Updated: {lastUpdate}</span>
+          <span className="text-xs text-gray-500 dark:text-gray-500 flex items-center gap-1.5">
+            <span className="live-dot live-dot-blue" />
+            {lastUpdate}
+          </span>
         )}
       </div>
 
@@ -87,15 +95,16 @@ export default function CurrencyPanel() {
 
       {/* Rate Cards */}
       <div className="grid grid-cols-2 gap-3 mb-5">
-        {PAIRS.map(({ to, label }) => {
+        {PAIRS.map(({ to, label, symbol }) => {
           const rate = rates ? rates[to] : null
           return (
             <div key={label} className="glass-inner rounded-lg p-3 sm:p-4 hover:scale-[1.02] transition-all duration-200">
               <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{label}</div>
               {loading ? (
-                <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded w-24 animate-pulse" />
+                <div className="h-8 skeleton-shimmer w-24" />
               ) : rate ? (
-                <div className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-300">
+                <div className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-300 tabular-nums">
+                  <span className="text-sm font-normal text-gray-400 dark:text-gray-500 mr-1">{symbol}</span>
                   {rate.toFixed(to === 'TWD' ? 2 : 4)}
                 </div>
               ) : (
@@ -116,7 +125,7 @@ export default function CurrencyPanel() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="Amount"
-              className="w-full bg-white/50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 input-glow transition-all"
+              className="w-full bg-white/50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 input-glow transition-all tabular-nums"
             />
             <select
               value={fromCurrency}
@@ -124,14 +133,14 @@ export default function CurrencyPanel() {
               className="mt-2 w-full bg-white/50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 input-glow transition-all"
             >
               {currencies.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>{getCurrencySymbol(c)} {c}</option>
               ))}
             </select>
           </div>
 
           <button
             onClick={swapCurrencies}
-            className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-all p-2 hover:rotate-180 duration-300"
+            className="swap-btn text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-all p-2"
             title="Swap"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -140,8 +149,13 @@ export default function CurrencyPanel() {
           </button>
 
           <div className="flex-1">
-            <div className="w-full bg-white/30 dark:bg-white/[0.02] border border-gray-200/50 dark:border-white/10 rounded-lg px-3 py-2 text-sm min-h-[38px] transition-all">
-              {convertedAmount !== null ? convertedAmount.toFixed(toCurrency === 'TWD' ? 2 : 4) : '-'}
+            <div className="w-full bg-white/30 dark:bg-white/[0.02] border border-gray-200/50 dark:border-white/10 rounded-lg px-3 py-2 text-sm min-h-[38px] transition-all tabular-nums">
+              {convertedAmount !== null ? (
+                <>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 mr-1">{getCurrencySymbol(toCurrency)}</span>
+                  {convertedAmount.toFixed(toCurrency === 'TWD' ? 2 : 4)}
+                </>
+              ) : '-'}
             </div>
             <select
               value={toCurrency}
@@ -149,7 +163,7 @@ export default function CurrencyPanel() {
               className="mt-2 w-full bg-white/50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 input-glow transition-all"
             >
               {currencies.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>{getCurrencySymbol(c)} {c}</option>
               ))}
             </select>
           </div>

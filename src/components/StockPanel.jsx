@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { getStockUrl, getStockHeaders, hasStockKey } from '../api'
+import { useCountUp } from '../hooks/useCountUp'
 
 function useStockApi(endpoint) {
   const [data, setData] = useState(null)
@@ -45,7 +46,6 @@ function StockCard({ symbol, onRemove }) {
   const [pulseClass, setPulseClass] = useState('')
   const prevPriceRef = useRef(null)
 
-  // Price pulse animation
   useEffect(() => {
     if (!data) return
     const price = data?.closePrice ?? data?.lastPrice
@@ -60,9 +60,9 @@ function StockCard({ symbol, onRemove }) {
 
   if (loading) {
     return (
-      <div className="glass-inner rounded-lg p-4 animate-pulse">
-        <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-20 mb-2" />
-        <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-24" />
+      <div className="glass-inner rounded-lg p-4">
+        <div className="h-4 skeleton-shimmer w-20 mb-2" />
+        <div className="h-6 skeleton-shimmer w-24" />
       </div>
     )
   }
@@ -89,7 +89,7 @@ function StockCard({ symbol, onRemove }) {
   const isUp = change >= 0
 
   return (
-    <div className={`group glass-inner rounded-lg p-4 hover:scale-[1.01] transition-all duration-200 ${pulseClass}`}>
+    <div className={`group stock-card ${isUp ? 'stock-card-up' : 'stock-card-down'} glass-inner rounded-lg p-4 transition-all duration-200 ${pulseClass}`}>
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2">
@@ -97,10 +97,13 @@ function StockCard({ symbol, onRemove }) {
             <span className="text-sm font-medium">{name}</span>
           </div>
           <div className="flex items-baseline gap-3 mt-1">
-            <span className="text-2xl font-bold">{price}</span>
-            <span className={`text-sm font-medium ${isUp ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-              {isUp ? '+' : ''}{change} ({isUp ? '+' : ''}{changePercent}%)
+            <span className="text-2xl font-bold tabular-nums">{typeof price === 'number' ? price.toLocaleString() : price}</span>
+            <span className={`change-pill ${isUp ? 'change-pill-up' : 'change-pill-down'}`}>
+              {isUp ? '▲' : '▼'} {isUp ? '+' : ''}{changePercent}%
             </span>
+          </div>
+          <div className={`text-xs mt-1 ${isUp ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+            {isUp ? '+' : ''}{change}
           </div>
         </div>
         <button
@@ -123,6 +126,9 @@ function TaiexCard() {
   const [pulseClass, setPulseClass] = useState('')
   const prevPriceRef = useRef(null)
 
+  const rawPrice = data?.closePrice ?? data?.lastPrice ?? 0
+  const animatedPrice = useCountUp(rawPrice)
+
   useEffect(() => {
     if (!data) return
     const price = data?.closePrice ?? data?.lastPrice
@@ -137,9 +143,9 @@ function TaiexCard() {
 
   if (loading) {
     return (
-      <div className="glass-inner rounded-lg p-4 animate-pulse">
-        <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-24 mb-2" />
-        <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded w-32" />
+      <div className="glass-inner rounded-lg p-4">
+        <div className="h-4 skeleton-shimmer w-24 mb-2" />
+        <div className="h-8 skeleton-shimmer w-32" />
       </div>
     )
   }
@@ -153,18 +159,24 @@ function TaiexCard() {
   }
 
   const quote = data
-  const price = quote?.closePrice ?? quote?.lastPrice ?? '-'
   const change = quote?.change ?? 0
   const changePercent = quote?.changePercent ?? 0
   const isUp = change >= 0
 
   return (
     <div className={`glass-inner rounded-lg p-4 ${pulseClass}`}>
-      <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">TAIEX</div>
+      <div className="flex items-center justify-between mb-1">
+        <div className="text-sm text-gray-500 dark:text-gray-400">TAIEX 加權指數</div>
+        <span className={`change-pill ${isUp ? 'change-pill-up' : 'change-pill-down'}`}>
+          {isUp ? '▲' : '▼'} {isUp ? '+' : ''}{changePercent}%
+        </span>
+      </div>
       <div className="flex items-baseline gap-3">
-        <span className="text-3xl font-bold">{price}</span>
-        <span className={`text-sm font-medium ${isUp ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-          {isUp ? '+' : ''}{change} ({isUp ? '+' : ''}{changePercent}%)
+        <span className={`text-3xl font-bold tabular-nums tracking-tight ${isUp ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+          {animatedPrice.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+        </span>
+        <span className={`text-sm font-medium ${isUp ? 'text-red-600/70 dark:text-red-400/70' : 'text-emerald-600/70 dark:text-emerald-400/70'}`}>
+          {isUp ? '+' : ''}{change}
         </span>
       </div>
     </div>
@@ -204,12 +216,15 @@ export default function StockPanel() {
   }
 
   return (
-    <section className="glass-card rounded-xl p-4 sm:p-5">
+    <section className="glass-card card-stripe card-stripe-emerald rounded-xl p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <span className="text-emerald-500 dark:text-emerald-400 text-xl glow-emerald">$</span> Taiwan Stocks
         </h2>
-        <span className="text-xs text-gray-500 dark:text-gray-500">每 30 秒更新</span>
+        <span className="text-xs text-gray-500 dark:text-gray-500 flex items-center gap-1.5">
+          <span className="live-dot" />
+          即時更新
+        </span>
       </div>
 
       <TaiexCard />

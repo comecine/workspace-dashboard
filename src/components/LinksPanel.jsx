@@ -60,7 +60,7 @@ export default function LinksPanel() {
   }
 
   return (
-    <section className="glass-card rounded-xl p-4 sm:p-5">
+    <section className="glass-card card-stripe card-stripe-orange rounded-xl p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <span className="text-orange-400 text-xl glow-orange">@</span> Quick Links
@@ -113,7 +113,7 @@ export default function LinksPanel() {
       )}
 
       {/* Links Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
         {links.map((link) => (
           <div key={link.id} className="group relative">
             <a
@@ -122,7 +122,7 @@ export default function LinksPanel() {
               rel="noopener noreferrer"
               className="link-card flex items-center gap-2.5 glass-inner rounded-lg p-3"
             >
-              <div className="w-8 h-8 rounded-lg bg-orange-600/15 dark:bg-orange-500/15 text-orange-500 dark:text-orange-400 flex items-center justify-center text-xs font-bold shrink-0 transition-all group-hover:bg-orange-600/25 dark:group-hover:bg-orange-500/25 group-hover:scale-110">
+              <div className="link-icon w-8 h-8 rounded-lg bg-orange-600/15 dark:bg-orange-500/15 text-orange-500 dark:text-orange-400 flex items-center justify-center text-xs font-bold shrink-0">
                 {link.icon}
               </div>
               <span className="text-sm truncate">{link.name}</span>
