@@ -6,11 +6,106 @@ const PAIRS = [
   { from: 'USD', to: 'CNY', label: 'USD / CNY', symbol: '¥' },
 ]
 
+function Sparkline({ data, color = '#3b82f6', height = 48, className = '' }) {
+  if (!data || data.length < 2) {
+    return (
+      <div className={`flex items-center justify-center text-xs text-gray-500 dark:text-gray-600 ${className}`} style={{ height }}>
+        累積中...（每日自動記錄）
+      </div>
+    )
+  }
+
+  const values = data.map(d => d.rate)
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  const range = max - min || 1
+  const width = 280
+  const padding = 4
+
+  const points = values.map((v, i) => {
+    const x = padding + (i / (values.length - 1)) * (width - padding * 2)
+    const y = padding + (1 - (v - min) / range) * (height - padding * 2)
+    return `${x},${y}`
+  }).join(' ')
+
+  const areaPoints = points + ` ${padding + ((values.length - 1) / (values.length - 1)) * (width - padding * 2)},${height} ${padding},${height}`
+
+  const first = values[0]
+  const last = values[values.length - 1]
+  const diff = last - first
+  const isUp = diff >= 0
+
+  return (
+    <div className={className}>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs text-gray-500 dark:text-gray-500">USD/TWD 近 {data.length} 天走勢</span>
+        <span className={`text-xs font-medium ${isUp ? 'text-red-500 dark:text-red-400' : 'text-emerald-500 dark:text-emerald-400'}`}>
+          {isUp ? '▲' : '▼'} {Math.abs(diff).toFixed(3)}
+        </span>
+      </div>
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full" style={{ height }}>
+        <defs>
+          <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.2" />
+            <stop offset="100%" stopColor={color} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <polygon points={areaPoints} fill="url(#sparkGrad)" />
+        <polyline
+          points={points}
+          fill="none"
+          stroke={color}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {/* Last point dot */}
+        {(() => {
+          const lastX = padding + ((values.length - 1) / (values.length - 1)) * (width - padding * 2)
+          const lastY = padding + (1 - (last - min) / range) * (height - padding * 2)
+          return <circle cx={lastX} cy={lastY} r="3" fill={color} />
+        })()}
+      </svg>
+      <div className="flex justify-between text-[10px] text-gray-500 dark:text-gray-600 mt-0.5">
+        <span>{data[0].date.slice(5)}</span>
+        <span>{data[data.length - 1].date.slice(5)}</span>
+      </div>
+    </div>
+  )
+}
+
+function getRateHistory() {
+  try {
+    const saved = localStorage.getItem('usd_twd_history')
+    return saved ? JSON.parse(saved) : []
+  } catch {
+    return []
+  }
+}
+
+function saveRateHistory(rate) {
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
+  const history = getRateHistory()
+
+  const existing = history.findIndex(h => h.date === today)
+  if (existing >= 0) {
+    history[existing].rate = rate
+  } else {
+    history.push({ date: today, rate })
+  }
+
+  // Keep last 14 days
+  const recent = history.slice(-14)
+  localStorage.setItem('usd_twd_history', JSON.stringify(recent))
+  return recent
+}
+
 export default function CurrencyPanel() {
   const [rates, setRates] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [lastUpdate, setLastUpdate] = useState(null)
+  const [rateHistory, setRateHistory] = useState(getRateHistory)
 
   const [amount, setAmount] = useState('1')
   const [fromCurrency, setFromCurrency] = useState('USD')
@@ -32,6 +127,12 @@ export default function CurrencyPanel() {
       setRates(json.conversion_rates)
       setLastUpdate(new Date().toLocaleTimeString('zh-TW', { timeZone: 'Asia/Taipei' }))
       setError(null)
+
+      // Save TWD rate to history
+      if (json.conversion_rates?.TWD) {
+        const updated = saveRateHistory(json.conversion_rates.TWD)
+        setRateHistory(updated)
+      }
     } catch (e) {
       setError(e.message)
     } finally {
@@ -94,7 +195,7 @@ export default function CurrencyPanel() {
       )}
 
       {/* Rate Cards */}
-      <div className="grid grid-cols-2 gap-3 mb-5">
+      <div className="grid grid-cols-2 gap-3 mb-4">
         {PAIRS.map(({ to, label, symbol }) => {
           const rate = rates ? rates[to] : null
           return (
@@ -113,6 +214,11 @@ export default function CurrencyPanel() {
             </div>
           )
         })}
+      </div>
+
+      {/* USD/TWD Sparkline */}
+      <div className="glass-inner rounded-lg p-3 sm:p-4 mb-4">
+        <Sparkline data={rateHistory} color="#3b82f6" height={48} />
       </div>
 
       {/* Converter */}
