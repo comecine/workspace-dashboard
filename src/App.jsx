@@ -136,7 +136,7 @@ function App() {
   const [layouts, setLayouts] = useState(() => {
     try {
       // Layout version: bump this when grid system changes (e.g. 2-col → 4-col)
-      const LAYOUT_VERSION = 2
+      const LAYOUT_VERSION = 3
       const savedVersion = parseInt(localStorage.getItem('layout_version') || '0')
       if (savedVersion < LAYOUT_VERSION) {
         localStorage.setItem('layout_version', String(LAYOUT_VERSION))
@@ -159,6 +159,7 @@ function App() {
     return localStorage.getItem('layout_locked') === 'true'
   })
   const saveTimerRef = useRef(null)
+  const mountCountRef = useRef(0)
 
   // Load layout from D1 (skip if layout version just bumped)
   useEffect(() => {
@@ -167,10 +168,8 @@ function App() {
         try {
           const saved = await fetchLayout()
           if (saved) {
-            // Validate: check if saved layout uses the current column count
             const maxW = Math.max(...(saved.lg || []).map(l => l.x + l.w))
             if (maxW > 2) {
-              // Layout is compatible with 4-col grid
               const widgetKeys = WIDGETS.map(w => w.key)
               const savedKeys = saved.lg?.map(l => l.i) || []
               const allPresent = widgetKeys.every(k => savedKeys.includes(k))
@@ -179,7 +178,6 @@ function App() {
                 localStorage.setItem('widget_layouts', JSON.stringify(saved))
               }
             }
-            // else: D1 has old 2-col layout, ignore it and push new defaults
           }
         } catch (e) {
           console.warn('D1 layout fetch failed', e)
@@ -201,14 +199,23 @@ function App() {
   }, [dark])
 
   const onLayoutChange = useCallback((layout, allLayouts) => {
-    setLayouts(allLayouts)
-    localStorage.setItem('widget_layouts', JSON.stringify(allLayouts))
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
-    saveTimerRef.current = setTimeout(() => {
-      if (hasLayoutApi()) {
-        saveLayout(allLayouts).catch(e => console.warn('D1 layout save failed', e))
-      }
-    }, 1000)
+    // Skip first 2 renders — react-grid-layout fires onLayoutChange on mount
+    // with potentially incorrect computed layouts
+    mountCountRef.current += 1
+    if (mountCountRef.current <= 2) return
+
+    // Merge with existing layouts to preserve all breakpoints
+    setLayouts(prev => {
+      const merged = { ...prev, ...allLayouts }
+      localStorage.setItem('widget_layouts', JSON.stringify(merged))
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = setTimeout(() => {
+        if (hasLayoutApi()) {
+          saveLayout(merged).catch(e => console.warn('D1 layout save failed', e))
+        }
+      }, 1000)
+      return merged
+    })
   }, [])
 
   const onWidgetResize = useCallback((widgetKey, size) => {
