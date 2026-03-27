@@ -3,6 +3,7 @@ import StockPanel from './components/StockPanel'
 import CurrencyPanel from './components/CurrencyPanel'
 import TranslatePanel from './components/TranslatePanel'
 import LinksPanel from './components/LinksPanel'
+import CalendarPanel from './components/CalendarPanel'
 import ReminderBar from './components/ReminderBar'
 
 function App() {
@@ -101,10 +102,13 @@ function App() {
         <div className="animate-fade-slide-up stagger-2">
           <LinksPanel />
         </div>
-        <div className="lg:col-span-2 animate-fade-slide-up stagger-3">
+        <div className="animate-fade-slide-up stagger-3">
+          <CalendarPanel />
+        </div>
+        <div className="animate-fade-slide-up stagger-4">
           <CurrencyPanel />
         </div>
-        <div className="lg:col-span-2 animate-fade-slide-up stagger-4">
+        <div className="lg:col-span-2 animate-fade-slide-up stagger-5">
           <TranslatePanel />
         </div>
       </main>

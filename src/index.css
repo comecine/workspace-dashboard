@@ -112,6 +112,10 @@
   background: linear-gradient(90deg, #3b82f6, #60a5fa, #93c5fd);
 }
 
+.card-stripe-amber::before {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24, #fcd34d);
+}
+
 /* ===== Gradient Border Glow on Hover ===== */
 .glass-card::after {
   content: '';
@@ -146,6 +150,11 @@
 
 .card-stripe-blue:hover::after {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.4), rgba(96, 165, 250, 0.1), transparent);
+  opacity: 1;
+}
+
+.card-stripe-amber:hover::after {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.4), rgba(251, 191, 36, 0.1), transparent);
   opacity: 1;
 }
 
