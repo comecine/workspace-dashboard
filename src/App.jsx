@@ -6,6 +6,7 @@ import CurrencyPanel from './components/CurrencyPanel'
 import TranslatePanel from './components/TranslatePanel'
 import LinksPanel from './components/LinksPanel'
 import CalendarPanel from './components/CalendarPanel'
+import WeatherPanel from './components/WeatherPanel'
 import ReminderBar from './components/ReminderBar'
 import { fetchLayout, saveLayout, hasLayoutApi } from './api'
 
@@ -15,21 +16,24 @@ const DEFAULT_LAYOUTS = {
     { i: 'links', x: 1, y: 0, w: 1, h: 5, minW: 1, minH: 2 },
     { i: 'calendar', x: 0, y: 5, w: 1, h: 5, minW: 1, minH: 3 },
     { i: 'currency', x: 1, y: 5, w: 1, h: 5, minW: 1, minH: 3 },
-    { i: 'translate', x: 0, y: 10, w: 2, h: 4, minW: 1, minH: 3 },
+    { i: 'weather', x: 0, y: 10, w: 1, h: 4, minW: 1, minH: 3 },
+    { i: 'translate', x: 1, y: 10, w: 1, h: 4, minW: 1, minH: 3 },
   ],
   md: [
     { i: 'stocks', x: 0, y: 0, w: 1, h: 5, minW: 1, minH: 3 },
     { i: 'links', x: 1, y: 0, w: 1, h: 5, minW: 1, minH: 2 },
     { i: 'calendar', x: 0, y: 5, w: 1, h: 5, minW: 1, minH: 3 },
     { i: 'currency', x: 1, y: 5, w: 1, h: 5, minW: 1, minH: 3 },
-    { i: 'translate', x: 0, y: 10, w: 2, h: 4, minW: 1, minH: 3 },
+    { i: 'weather', x: 0, y: 10, w: 1, h: 4, minW: 1, minH: 3 },
+    { i: 'translate', x: 1, y: 10, w: 1, h: 4, minW: 1, minH: 3 },
   ],
   sm: [
     { i: 'stocks', x: 0, y: 0, w: 1, h: 5, minW: 1, minH: 3 },
     { i: 'links', x: 0, y: 5, w: 1, h: 4, minW: 1, minH: 2 },
     { i: 'calendar', x: 0, y: 9, w: 1, h: 5, minW: 1, minH: 3 },
     { i: 'currency', x: 0, y: 14, w: 1, h: 5, minW: 1, minH: 3 },
-    { i: 'translate', x: 0, y: 19, w: 1, h: 4, minW: 1, minH: 3 },
+    { i: 'weather', x: 0, y: 19, w: 1, h: 4, minW: 1, minH: 3 },
+    { i: 'translate', x: 0, y: 23, w: 1, h: 4, minW: 1, minH: 3 },
   ],
 }
 
@@ -38,10 +42,11 @@ const WIDGETS = [
   { key: 'links', Component: LinksPanel },
   { key: 'calendar', Component: CalendarPanel },
   { key: 'currency', Component: CurrencyPanel },
+  { key: 'weather', Component: WeatherPanel },
   { key: 'translate', Component: TranslatePanel },
 ]
 
-function WidgetGrid({ layouts, onLayoutChange }) {
+function WidgetGrid({ layouts, onLayoutChange, locked }) {
   const { containerRef, width: containerWidth, mounted } = useContainerWidth()
 
   return (
@@ -58,15 +63,19 @@ function WidgetGrid({ layouts, onLayoutChange }) {
           containerPadding={[0, 0]}
           onLayoutChange={onLayoutChange}
           draggableHandle=".widget-drag-handle"
-          resizeHandles={['se', 'e', 's']}
+          resizeHandles={locked ? [] : ['se', 'e', 's']}
+          isDraggable={!locked}
+          isResizable={!locked}
           useCSSTransforms={true}
           compactType="vertical"
         >
           {WIDGETS.map(({ key, Component }) => (
             <div key={key} className="widget-wrapper">
-              <div className="widget-drag-handle" title="拖拉移動">
-                <span>⠿</span>
-              </div>
+              {!locked && (
+                <div className="widget-drag-handle" title="拖拉移動">
+                  <span>⠿</span>
+                </div>
+              )}
               <div className="widget-content">
                 <Component />
               </div>
@@ -87,12 +96,21 @@ function App() {
   const [layouts, setLayouts] = useState(() => {
     try {
       const saved = localStorage.getItem('widget_layouts')
-      return saved ? JSON.parse(saved) : DEFAULT_LAYOUTS
-    } catch {
-      return DEFAULT_LAYOUTS
-    }
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        // Check if all widgets exist in saved layout
+        const widgetKeys = WIDGETS.map(w => w.key)
+        const savedKeys = parsed.lg?.map(l => l.i) || []
+        const allPresent = widgetKeys.every(k => savedKeys.includes(k))
+        if (allPresent) return parsed
+      }
+    } catch {}
+    return DEFAULT_LAYOUTS
   })
   const [layoutReady, setLayoutReady] = useState(false)
+  const [locked, setLocked] = useState(() => {
+    return localStorage.getItem('layout_locked') === 'true'
+  })
   const saveTimerRef = useRef(null)
 
   // Load layout from D1
@@ -127,7 +145,6 @@ function App() {
   const onLayoutChange = useCallback((layout, allLayouts) => {
     setLayouts(allLayouts)
     localStorage.setItem('widget_layouts', JSON.stringify(allLayouts))
-    // Debounce D1 save
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     saveTimerRef.current = setTimeout(() => {
       if (hasLayoutApi()) {
@@ -142,6 +159,14 @@ function App() {
     if (hasLayoutApi()) {
       saveLayout(DEFAULT_LAYOUTS).catch(e => console.warn('D1 layout reset failed', e))
     }
+  }, [])
+
+  const toggleLock = useCallback(() => {
+    setLocked(prev => {
+      const next = !prev
+      localStorage.setItem('layout_locked', String(next))
+      return next
+    })
   }, [])
 
   const dateStr = now.toLocaleString('zh-TW', {
@@ -170,12 +195,10 @@ function App() {
 
   return (
     <div className="min-h-screen bg-animated-gradient mesh-overlay text-gray-900 dark:text-gray-100 transition-colors relative">
-      {/* Floating background orbs for dark mode ambiance */}
       <div className="floating-orb floating-orb-1" />
       <div className="floating-orb floating-orb-2" />
       <div className="floating-orb floating-orb-3" />
 
-      {/* Header */}
       <header className="glass-header sticky top-0 z-50 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between animate-fade-slide-down">
         <h1 className="text-lg sm:text-xl font-bold tracking-tight gradient-text">
           Workspace Dashboard
@@ -194,12 +217,21 @@ function App() {
             <span>{seconds}</span>
           </time>
           <button
-            onClick={resetLayout}
-            className="text-xs text-gray-500 hover:text-amber-500 transition-colors hidden sm:block"
-            title="重置佈局"
+            onClick={toggleLock}
+            className={`text-sm transition-colors hidden sm:block ${locked ? 'text-amber-500' : 'text-gray-500 hover:text-amber-500'}`}
+            title={locked ? '解鎖佈局' : '鎖定佈局'}
           >
-            &#8634;
+            {locked ? '\uD83D\uDD12' : '\uD83D\uDD13'}
           </button>
+          {!locked && (
+            <button
+              onClick={resetLayout}
+              className="text-xs text-gray-500 hover:text-amber-500 transition-colors hidden sm:block"
+              title="重置佈局"
+            >
+              &#8634;
+            </button>
+          )}
           <button
             onClick={() => setDark(!dark)}
             className="theme-btn w-9 h-9 rounded-xl bg-white/50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/10 flex items-center justify-center text-base btn-glow"
@@ -211,7 +243,6 @@ function App() {
         </div>
       </header>
 
-      {/* Mobile time */}
       <div className="sm:hidden px-4 py-2 text-xs text-gray-500 dark:text-gray-400 font-mono text-center border-b border-gray-200/30 dark:border-white/5 animate-fade-in flex items-center justify-center gap-0.5">
         <span>{dateStr}</span>
         <span className="mx-1.5">|</span>
@@ -222,10 +253,9 @@ function App() {
         <span>{seconds}</span>
       </div>
 
-      {/* Widget Grid */}
       <main className="relative z-10 p-3 sm:p-4 md:p-6">
         {layoutReady && (
-          <WidgetGrid layouts={layouts} onLayoutChange={onLayoutChange} />
+          <WidgetGrid layouts={layouts} onLayoutChange={onLayoutChange} locked={locked} />
         )}
       </main>
     </div>
