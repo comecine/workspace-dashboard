@@ -95,13 +95,13 @@ function App() {
           <StockPanel />
         </div>
         <div className="animate-fade-slide-up stagger-2">
-          <CurrencyPanel />
+          <LinksPanel />
         </div>
         <div className="lg:col-span-2 animate-fade-slide-up stagger-3">
           <TranslatePanel />
         </div>
         <div className="lg:col-span-2 animate-fade-slide-up stagger-4">
-          <LinksPanel />
+          <CurrencyPanel />
         </div>
       </main>
     </div>
