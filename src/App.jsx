@@ -164,7 +164,7 @@ function App() {
     return localStorage.getItem('layout_locked') === 'true'
   })
   const saveTimerRef = useRef(null)
-  const mountCountRef = useRef(0)
+  const initializedRef = useRef(false)
 
   // Load layout from D1 (skip if layout version just bumped)
   useEffect(() => {
@@ -204,14 +204,18 @@ function App() {
   }, [dark])
 
   const onLayoutChange = useCallback((layout, allLayouts) => {
-    // Skip first 2 renders — react-grid-layout fires onLayoutChange on mount
-    // with potentially incorrect computed layouts
-    mountCountRef.current += 1
-    if (mountCountRef.current <= 2) return
-
-    // Merge with existing layouts to preserve all breakpoints
     setLayouts(prev => {
+      // Compare with current state — skip if nothing actually changed (mount-time fire)
+      const prevStr = JSON.stringify(prev)
       const merged = { ...prev, ...allLayouts }
+      const mergedStr = JSON.stringify(merged)
+      if (prevStr === mergedStr) return prev
+
+      // Mark as user-initiated change after first real diff
+      if (!initializedRef.current) {
+        initializedRef.current = true
+      }
+
       localStorage.setItem('widget_layouts', JSON.stringify(merged))
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
       saveTimerRef.current = setTimeout(() => {
