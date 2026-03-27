@@ -1,6 +1,19 @@
 import { useState, useEffect, useCallback } from 'react'
 
-const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast?latitude=25.0330&longitude=121.5654&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=Asia/Taipei&forecast_days=3'
+const CITIES = [
+  { name: '台北', lat: 25.0330, lon: 121.5654, tz: 'Asia/Taipei' },
+  { name: '台中', lat: 24.1477, lon: 120.6736, tz: 'Asia/Taipei' },
+  { name: '高雄', lat: 22.6273, lon: 120.3014, tz: 'Asia/Taipei' },
+  { name: '東京', lat: 35.6762, lon: 139.6503, tz: 'Asia/Tokyo' },
+  { name: '上海', lat: 31.2304, lon: 121.4737, tz: 'Asia/Shanghai' },
+  { name: '新加坡', lat: 1.3521, lon: 103.8198, tz: 'Asia/Singapore' },
+  { name: '紐約', lat: 40.7128, lon: -74.0060, tz: 'America/New_York' },
+  { name: '倫敦', lat: 51.5074, lon: -0.1278, tz: 'Europe/London' },
+]
+
+function getWeatherUrl(city) {
+  return `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=${city.tz}&forecast_days=3`
+}
 
 const WMO_CODES = {
   0: { label: '晴', icon: '☀️' },
@@ -42,14 +55,21 @@ function getWeekday(dateStr) {
 }
 
 export default function WeatherPanel() {
+  const [cityIdx, setCityIdx] = useState(() => {
+    const saved = localStorage.getItem('weather_city')
+    const idx = saved ? parseInt(saved) : 0
+    return idx >= 0 && idx < CITIES.length ? idx : 0
+  })
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  const city = CITIES[cityIdx]
+
   const fetchWeather = useCallback(async () => {
     try {
       setLoading(true)
-      const res = await fetch(WEATHER_URL)
+      const res = await fetch(getWeatherUrl(city))
       if (!res.ok) throw new Error(`API ${res.status}`)
       const json = await res.json()
       setData(json)
@@ -59,13 +79,18 @@ export default function WeatherPanel() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [city])
 
   useEffect(() => {
     fetchWeather()
-    const interval = setInterval(fetchWeather, 30 * 60 * 1000) // 30 min
+    const interval = setInterval(fetchWeather, 30 * 60 * 1000)
     return () => clearInterval(interval)
   }, [fetchWeather])
+
+  const switchCity = (idx) => {
+    setCityIdx(idx)
+    localStorage.setItem('weather_city', String(idx))
+  }
 
   const current = data?.current
   const daily = data?.daily
@@ -77,7 +102,15 @@ export default function WeatherPanel() {
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <span className="text-cyan-500 dark:text-cyan-400 text-xl">🌤️</span> Weather
         </h2>
-        <span className="text-xs text-gray-500 dark:text-gray-500">台北</span>
+        <select
+          value={cityIdx}
+          onChange={(e) => switchCity(Number(e.target.value))}
+          className="text-xs bg-white/30 dark:bg-white/5 border border-gray-200/30 dark:border-white/10 rounded-lg px-2 py-1 focus:outline-none focus:border-cyan-500 transition-all cursor-pointer"
+        >
+          {CITIES.map((c, i) => (
+            <option key={c.name} value={i}>{c.name}</option>
+          ))}
+        </select>
       </div>
 
       {error && (
@@ -93,7 +126,6 @@ export default function WeatherPanel() {
         </div>
       ) : current && weather ? (
         <>
-          {/* Current weather */}
           <div className="glass-inner rounded-lg p-4 mb-3">
             <div className="flex items-center justify-between">
               <div>
@@ -121,7 +153,6 @@ export default function WeatherPanel() {
             </div>
           </div>
 
-          {/* 3-day forecast */}
           {daily && (
             <div className="grid grid-cols-3 gap-2">
               {daily.time.map((date, i) => {

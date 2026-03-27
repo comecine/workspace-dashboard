@@ -255,3 +255,47 @@ export async function removeLink(id) {
   if (!res.ok) throw new Error(`Links API ${res.status}`)
   return res.json()
 }
+
+// ===== To-Do API (D1) =====
+const getTodosApiUrl = () => WORKER_URL ? `${WORKER_URL}/api/todos` : ''
+
+export async function fetchTodos() {
+  const base = getTodosApiUrl()
+  if (!base) return null
+  const res = await fetch(base)
+  if (!res.ok) throw new Error(`Todos API ${res.status}`)
+  const data = await res.json()
+  return data.success ? data.todos : null
+}
+
+export async function addTodo(id, text) {
+  const base = getTodosApiUrl()
+  if (!base) return null
+  const res = await fetch(base, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, text }),
+  })
+  if (!res.ok) throw new Error(`Todos API ${res.status}`)
+  return res.json()
+}
+
+export async function toggleTodo(id, done) {
+  const base = getTodosApiUrl()
+  if (!base) return null
+  const res = await fetch(base, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, done }),
+  })
+  if (!res.ok) throw new Error(`Todos API ${res.status}`)
+  return res.json()
+}
+
+export async function removeTodo(id) {
+  const base = getTodosApiUrl()
+  if (!base) return null
+  const res = await fetch(`${base}?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+  if (!res.ok) throw new Error(`Todos API ${res.status}`)
+  return res.json()
+}

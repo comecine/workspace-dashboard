@@ -7,6 +7,7 @@ import TranslatePanel from './components/TranslatePanel'
 import LinksPanel from './components/LinksPanel'
 import CalendarPanel from './components/CalendarPanel'
 import WeatherPanel from './components/WeatherPanel'
+import TodoPanel from './components/TodoPanel'
 import ReminderBar from './components/ReminderBar'
 import { fetchLayout, saveLayout, hasLayoutApi } from './api'
 
@@ -17,7 +18,8 @@ const DEFAULT_LAYOUTS = {
     { i: 'calendar', x: 0, y: 5, w: 1, h: 5, minW: 1, minH: 3 },
     { i: 'currency', x: 1, y: 5, w: 1, h: 5, minW: 1, minH: 3 },
     { i: 'weather', x: 0, y: 10, w: 1, h: 4, minW: 1, minH: 3 },
-    { i: 'translate', x: 1, y: 10, w: 1, h: 4, minW: 1, minH: 3 },
+    { i: 'todo', x: 1, y: 10, w: 1, h: 4, minW: 1, minH: 3 },
+    { i: 'translate', x: 0, y: 14, w: 1, h: 4, minW: 1, minH: 3 },
   ],
   md: [
     { i: 'stocks', x: 0, y: 0, w: 1, h: 5, minW: 1, minH: 3 },
@@ -25,7 +27,8 @@ const DEFAULT_LAYOUTS = {
     { i: 'calendar', x: 0, y: 5, w: 1, h: 5, minW: 1, minH: 3 },
     { i: 'currency', x: 1, y: 5, w: 1, h: 5, minW: 1, minH: 3 },
     { i: 'weather', x: 0, y: 10, w: 1, h: 4, minW: 1, minH: 3 },
-    { i: 'translate', x: 1, y: 10, w: 1, h: 4, minW: 1, minH: 3 },
+    { i: 'todo', x: 1, y: 10, w: 1, h: 4, minW: 1, minH: 3 },
+    { i: 'translate', x: 0, y: 14, w: 1, h: 4, minW: 1, minH: 3 },
   ],
   sm: [
     { i: 'stocks', x: 0, y: 0, w: 1, h: 5, minW: 1, minH: 3 },
@@ -33,7 +36,8 @@ const DEFAULT_LAYOUTS = {
     { i: 'calendar', x: 0, y: 9, w: 1, h: 5, minW: 1, minH: 3 },
     { i: 'currency', x: 0, y: 14, w: 1, h: 5, minW: 1, minH: 3 },
     { i: 'weather', x: 0, y: 19, w: 1, h: 4, minW: 1, minH: 3 },
-    { i: 'translate', x: 0, y: 23, w: 1, h: 4, minW: 1, minH: 3 },
+    { i: 'todo', x: 0, y: 23, w: 1, h: 4, minW: 1, minH: 3 },
+    { i: 'translate', x: 0, y: 27, w: 1, h: 4, minW: 1, minH: 3 },
   ],
 }
 
@@ -43,6 +47,7 @@ const WIDGETS = [
   { key: 'calendar', Component: CalendarPanel },
   { key: 'currency', Component: CurrencyPanel },
   { key: 'weather', Component: WeatherPanel },
+  { key: 'todo', Component: TodoPanel },
   { key: 'translate', Component: TranslatePanel },
 ]
 

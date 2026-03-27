@@ -6,6 +6,14 @@ CREATE TABLE IF NOT EXISTS stock_watchlist (
   created_at TEXT DEFAULT (datetime('now'))
 );
 
+-- To-Do
+CREATE TABLE IF NOT EXISTS todos (
+  id TEXT PRIMARY KEY,
+  text TEXT NOT NULL,
+  done INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
 -- Quick links
 CREATE TABLE IF NOT EXISTS work_links (
   id TEXT PRIMARY KEY,

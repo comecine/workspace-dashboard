@@ -234,6 +234,43 @@ export default {
         }
       }
 
+      // ===== To-Do CRUD (D1) =====
+      if (path === '/api/todos') {
+        if (method === 'GET') {
+          const { results } = await env.DB.prepare(
+            'SELECT id, text, done, created_at FROM todos ORDER BY created_at'
+          ).all();
+          return Response.json({ success: true, todos: results }, { headers: corsHeaders });
+        }
+
+        if (method === 'POST') {
+          const body = await request.json();
+          const { id, text } = body;
+          if (!id || !text) return Response.json({ error: 'Missing id or text' }, { status: 400, headers: corsHeaders });
+          await env.DB.prepare(
+            'INSERT OR IGNORE INTO todos (id, text) VALUES (?, ?)'
+          ).bind(id, text).run();
+          return Response.json({ success: true, id }, { headers: corsHeaders });
+        }
+
+        if (method === 'PUT') {
+          const body = await request.json();
+          const { id, done } = body;
+          if (!id) return Response.json({ error: 'Missing id' }, { status: 400, headers: corsHeaders });
+          await env.DB.prepare(
+            'UPDATE todos SET done = ? WHERE id = ?'
+          ).bind(done ? 1 : 0, id).run();
+          return Response.json({ success: true, id }, { headers: corsHeaders });
+        }
+
+        if (method === 'DELETE') {
+          const id = url.searchParams.get('id');
+          if (!id) return Response.json({ error: 'Missing id' }, { status: 400, headers: corsHeaders });
+          await env.DB.prepare('DELETE FROM todos WHERE id = ?').bind(id).run();
+          return Response.json({ success: true, deleted: id }, { headers: corsHeaders });
+        }
+      }
+
       return Response.json({ error: 'Not found' }, { status: 404, headers: corsHeaders });
     } catch (e) {
       return Response.json({ error: e.message }, { status: 500, headers: corsHeaders });
