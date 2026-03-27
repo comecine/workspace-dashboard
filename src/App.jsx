@@ -3,6 +3,7 @@ import StockPanel from './components/StockPanel'
 import CurrencyPanel from './components/CurrencyPanel'
 import TranslatePanel from './components/TranslatePanel'
 import LinksPanel from './components/LinksPanel'
+import ReminderBar from './components/ReminderBar'
 
 function App() {
   const [now, setNow] = useState(new Date())
@@ -58,6 +59,9 @@ function App() {
           Workspace Dashboard
         </h1>
         <div className="flex items-center gap-3 sm:gap-4">
+          <div className="hidden sm:block">
+            <ReminderBar />
+          </div>
           <time className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-mono hidden sm:flex items-center gap-0.5">
             <span>{dateStr}</span>
             <span className="mx-1.5 text-gray-300 dark:text-gray-600">|</span>
