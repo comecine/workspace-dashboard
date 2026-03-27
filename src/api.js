@@ -128,6 +128,18 @@ export async function removeStockFromWatchlist(symbol) {
   return res.json()
 }
 
+export async function reorderStocks(order) {
+  const base = getStocksApiUrl()
+  if (!base) return null
+  const res = await fetch(base, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ order }),
+  })
+  if (!res.ok) throw new Error(`Stocks API ${res.status}`)
+  return res.json()
+}
+
 // ===== Work Links API (D1) =====
 const getLinksApiUrl = () => WORKER_URL ? `${WORKER_URL}/api/links` : ''
 

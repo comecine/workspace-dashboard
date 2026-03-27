@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { getStockUrl, getStockHeaders, hasStockKey } from '../api'
-import { fetchStockWatchlist, addStockToWatchlist, updateStockMeta, removeStockFromWatchlist, hasStocksApi } from '../api'
+import { fetchStockWatchlist, addStockToWatchlist, updateStockMeta, removeStockFromWatchlist, reorderStocks, hasStocksApi } from '../api'
 import { useCountUp } from '../hooks/useCountUp'
 
 function useStockApi(endpoint) {
@@ -39,7 +39,7 @@ function useStockApi(endpoint) {
   return { data, loading, error }
 }
 
-function StockRow({ symbol, meta, onRemove, onUpdateMeta }) {
+function StockRow({ symbol, meta, onRemove, onUpdateMeta, dragProps }) {
   const { data, loading, error } = useStockApi(`/intraday/quote/${symbol}`)
   const [confirmRemove, setConfirmRemove] = useState(false)
   const [editingTarget, setEditingTarget] = useState(false)
@@ -66,7 +66,8 @@ function StockRow({ symbol, meta, onRemove, onUpdateMeta }) {
 
   if (loading) {
     return (
-      <tr className="border-b border-gray-200/10 dark:border-white/5">
+      <tr className="border-b border-gray-200/10 dark:border-white/5" {...dragProps}>
+        <td className="py-3 px-1 text-center text-gray-400 dark:text-gray-600 select-none"><span className="text-[10px] opacity-50">⠿</span></td>
         <td className="py-3 px-2"><div className="h-4 skeleton-shimmer w-16" /></td>
         <td className="py-3 px-2"><div className="h-4 skeleton-shimmer w-14" /></td>
         <td className="py-3 px-2"><div className="h-4 skeleton-shimmer w-16" /></td>
@@ -79,7 +80,8 @@ function StockRow({ symbol, meta, onRemove, onUpdateMeta }) {
 
   if (error) {
     return (
-      <tr className="border-b border-gray-200/10 dark:border-white/5">
+      <tr className="border-b border-gray-200/10 dark:border-white/5" {...dragProps}>
+        <td className="py-3 px-1 text-center text-gray-400 dark:text-gray-600 select-none"><span className="text-[10px] opacity-50">⠿</span></td>
         <td className="py-3 px-2 text-sm">{symbol}</td>
         <td colSpan={4} className="py-3 px-2 text-red-500 dark:text-red-400 text-sm">{error}</td>
         <td className="py-3 px-2">
@@ -90,7 +92,10 @@ function StockRow({ symbol, meta, onRemove, onUpdateMeta }) {
   }
 
   return (
-    <tr className="border-b border-gray-200/10 dark:border-white/5 hover:bg-white/5 dark:hover:bg-white/[0.03] transition-colors">
+    <tr {...dragProps} className={`border-b border-gray-200/10 dark:border-white/5 hover:bg-white/5 dark:hover:bg-white/[0.03] transition-colors cursor-grab active:cursor-grabbing group ${dragProps?.className || ''}`}>
+      <td className="py-3 px-1 text-center text-gray-400 dark:text-gray-600 select-none">
+        <span className="text-[10px] opacity-50 group-hover:opacity-100 transition-opacity">⠿</span>
+      </td>
       <td className="py-3 px-2">
         <div className="text-sm font-medium">{name}</div>
         <div className="text-xs text-gray-500 dark:text-gray-500">{symbol}</div>
@@ -232,6 +237,25 @@ export default function StockPanel() {
   const [input, setInput] = useState('')
   const [inputError, setInputError] = useState('')
   const [synced, setSynced] = useState(false)
+  const [dragIdx, setDragIdx] = useState(null)
+  const [overIdx, setOverIdx] = useState(null)
+
+  const handleDragStart = (idx) => setDragIdx(idx)
+  const handleDragOver = (e, idx) => { e.preventDefault(); if (idx !== overIdx) setOverIdx(idx) }
+  const handleDrop = (idx) => {
+    if (dragIdx === null || dragIdx === idx) { setDragIdx(null); setOverIdx(null); return }
+    const updated = [...watchlist]
+    const [moved] = updated.splice(dragIdx, 1)
+    updated.splice(idx, 0, moved)
+    setWatchlist(updated)
+    setDragIdx(null)
+    setOverIdx(null)
+    if (hasStocksApi()) {
+      const order = updated.map((s, i) => ({ symbol: s, sort_order: i }))
+      reorderStocks(order).catch(e => console.warn('D1 stock reorder failed', e))
+    }
+  }
+  const handleDragEnd = () => { setDragIdx(null); setOverIdx(null) }
 
   // Load from D1 on mount, fallback to localStorage
   useEffect(() => {
@@ -355,6 +379,7 @@ export default function StockPanel() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-300/20 dark:border-white/10 text-xs text-gray-500 dark:text-gray-500">
+                <th className="py-2 px-1 w-6" />
                 <th className="py-2 px-2 text-left font-medium w-[20%]">股票</th>
                 <th className="py-2 px-2 text-right font-medium w-[15%]">現價</th>
                 <th className="py-2 px-2 text-right font-medium w-[15%]">漲跌</th>
@@ -364,13 +389,21 @@ export default function StockPanel() {
               </tr>
             </thead>
             <tbody>
-              {watchlist.map((symbol) => (
+              {watchlist.map((symbol, idx) => (
                 <StockRow
                   key={symbol}
                   symbol={symbol}
                   meta={stockMeta[symbol] || { targetPrice: '', note: '' }}
                   onRemove={removeStock}
                   onUpdateMeta={handleUpdateMeta}
+                  dragProps={{
+                    draggable: true,
+                    onDragStart: () => handleDragStart(idx),
+                    onDragOver: (e) => handleDragOver(e, idx),
+                    onDrop: () => handleDrop(idx),
+                    onDragEnd: handleDragEnd,
+                    className: `${dragIdx === idx ? 'opacity-30' : ''} ${overIdx === idx && dragIdx !== idx ? 'border-t-2 !border-t-emerald-400' : ''}`,
+                  }}
                 />
               ))}
             </tbody>

@@ -94,7 +94,7 @@ export default {
         // GET: list all stocks
         if (method === 'GET') {
           const { results } = await env.DB.prepare(
-            'SELECT symbol, target_price, note FROM stock_watchlist ORDER BY created_at'
+            'SELECT symbol, target_price, note, sort_order FROM stock_watchlist ORDER BY sort_order, created_at'
           ).all();
           return Response.json({ success: true, stocks: results }, { headers: corsHeaders });
         }
@@ -119,6 +119,18 @@ export default {
             'UPDATE stock_watchlist SET target_price = ?, note = ? WHERE symbol = ?'
           ).bind(target_price || '', note || '', symbol).run();
           return Response.json({ success: true, symbol }, { headers: corsHeaders });
+        }
+
+        // PATCH: reorder stocks (batch update sort_order)
+        if (method === 'PATCH') {
+          const body = await request.json();
+          const { order } = body; // array of { symbol, sort_order }
+          if (!order || !Array.isArray(order)) return Response.json({ error: 'Missing order array' }, { status: 400, headers: corsHeaders });
+          const stmts = order.map(({ symbol, sort_order }) =>
+            env.DB.prepare('UPDATE stock_watchlist SET sort_order = ? WHERE symbol = ?').bind(sort_order, symbol)
+          );
+          await env.DB.batch(stmts);
+          return Response.json({ success: true }, { headers: corsHeaders });
         }
 
         // DELETE: remove a stock
