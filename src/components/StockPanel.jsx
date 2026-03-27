@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { getStockUrl, getStockHeaders, hasStockKey } from '../api'
 
 function useStockApi(endpoint) {
@@ -42,10 +42,25 @@ function useStockApi(endpoint) {
 function StockCard({ symbol, onRemove }) {
   const { data, loading, error } = useStockApi(`/intraday/quote/${symbol}`)
   const [confirmRemove, setConfirmRemove] = useState(false)
+  const [pulseClass, setPulseClass] = useState('')
+  const prevPriceRef = useRef(null)
+
+  // Price pulse animation
+  useEffect(() => {
+    if (!data) return
+    const price = data?.closePrice ?? data?.lastPrice
+    if (price == null) return
+    if (prevPriceRef.current !== null && prevPriceRef.current !== price) {
+      setPulseClass(price > prevPriceRef.current ? 'price-pulse-up' : 'price-pulse-down')
+      const timer = setTimeout(() => setPulseClass(''), 1200)
+      return () => clearTimeout(timer)
+    }
+    prevPriceRef.current = price
+  }, [data])
 
   if (loading) {
     return (
-      <div className="bg-gray-200/50 dark:bg-gray-800/50 rounded-lg p-4 animate-pulse">
+      <div className="glass-inner rounded-lg p-4 animate-pulse">
         <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-20 mb-2" />
         <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-24" />
       </div>
@@ -54,11 +69,11 @@ function StockCard({ symbol, onRemove }) {
 
   if (error) {
     return (
-      <div className="bg-gray-200/50 dark:bg-gray-800/50 rounded-lg p-4 text-red-500 dark:text-red-400 text-sm flex items-center justify-between">
+      <div className="glass-inner rounded-lg p-4 text-red-500 dark:text-red-400 text-sm flex items-center justify-between">
         <span>{symbol}: {error}</span>
         <button
           onClick={() => onRemove(symbol)}
-          className="text-gray-400 hover:text-red-500 transition-colors text-sm ml-2"
+          className="text-gray-400 hover:text-red-500 transition-all text-sm ml-2"
         >
           x
         </button>
@@ -74,7 +89,7 @@ function StockCard({ symbol, onRemove }) {
   const isUp = change >= 0
 
   return (
-    <div className="group bg-gray-200/50 dark:bg-gray-800/50 rounded-lg p-4 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
+    <div className={`group glass-inner rounded-lg p-4 hover:scale-[1.01] transition-all duration-200 ${pulseClass}`}>
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2">
@@ -93,7 +108,7 @@ function StockCard({ symbol, onRemove }) {
             if (confirmRemove) { onRemove(symbol) }
             else { setConfirmRemove(true); setTimeout(() => setConfirmRemove(false), 3000) }
           }}
-          className={`text-sm transition-colors ${confirmRemove ? 'text-red-500 dark:text-red-400 font-medium' : 'text-gray-400 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400'}`}
+          className={`text-sm transition-all ${confirmRemove ? 'text-red-500 dark:text-red-400 font-medium' : 'text-gray-400 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400'}`}
           title="Remove"
         >
           {confirmRemove ? 'Delete?' : 'x'}
@@ -103,12 +118,26 @@ function StockCard({ symbol, onRemove }) {
   )
 }
 
-function TaiexCard({ lastUpdate }) {
+function TaiexCard() {
   const { data, loading, error } = useStockApi('/intraday/quote/IX0001')
+  const [pulseClass, setPulseClass] = useState('')
+  const prevPriceRef = useRef(null)
+
+  useEffect(() => {
+    if (!data) return
+    const price = data?.closePrice ?? data?.lastPrice
+    if (price == null) return
+    if (prevPriceRef.current !== null && prevPriceRef.current !== price) {
+      setPulseClass(price > prevPriceRef.current ? 'price-pulse-up' : 'price-pulse-down')
+      const timer = setTimeout(() => setPulseClass(''), 1200)
+      return () => clearTimeout(timer)
+    }
+    prevPriceRef.current = price
+  }, [data])
 
   if (loading) {
     return (
-      <div className="bg-gray-200/50 dark:bg-gray-800/50 rounded-lg p-4 animate-pulse">
+      <div className="glass-inner rounded-lg p-4 animate-pulse">
         <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-24 mb-2" />
         <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded w-32" />
       </div>
@@ -117,7 +146,7 @@ function TaiexCard({ lastUpdate }) {
 
   if (error) {
     return (
-      <div className="bg-gray-200/50 dark:bg-gray-800/50 rounded-lg p-4 text-red-500 dark:text-red-400 text-sm">
+      <div className="glass-inner rounded-lg p-4 text-red-500 dark:text-red-400 text-sm">
         TAIEX: {error}
       </div>
     )
@@ -130,7 +159,7 @@ function TaiexCard({ lastUpdate }) {
   const isUp = change >= 0
 
   return (
-    <div className="bg-gray-200/50 dark:bg-gray-800/50 rounded-lg p-4">
+    <div className={`glass-inner rounded-lg p-4 ${pulseClass}`}>
       <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">TAIEX</div>
       <div className="flex items-baseline gap-3">
         <span className="text-3xl font-bold">{price}</span>
@@ -149,7 +178,6 @@ export default function StockPanel() {
   })
   const [input, setInput] = useState('')
   const [inputError, setInputError] = useState('')
-  const [lastUpdate, setLastUpdate] = useState(null)
 
   useEffect(() => {
     localStorage.setItem('stock_watchlist', JSON.stringify(watchlist))
@@ -176,12 +204,12 @@ export default function StockPanel() {
   }
 
   return (
-    <section className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-5">
+    <section className="glass-card rounded-xl p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-          <span className="text-emerald-500 dark:text-emerald-400">$</span> Taiwan Stocks
+          <span className="text-emerald-500 dark:text-emerald-400 text-xl glow-emerald">$</span> Taiwan Stocks
         </h2>
-        <span className="text-xs text-gray-500">每 30 秒更新</span>
+        <span className="text-xs text-gray-500 dark:text-gray-500">每 30 秒更新</span>
       </div>
 
       <TaiexCard />
@@ -194,11 +222,11 @@ export default function StockPanel() {
             onChange={(e) => { setInput(e.target.value); setInputError('') }}
             onKeyDown={(e) => e.key === 'Enter' && addStock()}
             placeholder="輸入股票代碼，例如 2317"
-            className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 placeholder-gray-400 dark:placeholder-gray-500"
+            className="flex-1 bg-white/50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 input-glow placeholder-gray-400 dark:placeholder-gray-500 transition-all"
           />
           <button
             onClick={addStock}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all hover:shadow-lg hover:shadow-emerald-500/20 btn-glow active:scale-95"
           >
             Add
           </button>
@@ -218,7 +246,7 @@ export default function StockPanel() {
       </div>
 
       {!hasStockKey() && (
-        <div className="mt-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700/50 rounded-lg p-3 text-sm text-yellow-700 dark:text-yellow-300">
+        <div className="mt-4 bg-yellow-50/80 dark:bg-yellow-900/20 border border-yellow-300/50 dark:border-yellow-700/30 rounded-lg p-3 text-sm text-yellow-700 dark:text-yellow-300 backdrop-blur-sm">
           請在 .env 設定 VITE_FUGLE_API_KEY 以啟用股票資料。
         </div>
       )}

@@ -77,14 +77,14 @@ export default function TranslatePanel() {
   }
 
   return (
-    <section className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-5">
+    <section className="glass-card rounded-xl p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-          <span className="text-violet-500 dark:text-violet-400">A</span> Translate
+          <span className="text-violet-500 dark:text-violet-400 text-xl glow-violet">A</span> Translate
         </h2>
         <button
           onClick={clearAll}
-          className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+          className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-all"
         >
           Clear
         </button>
@@ -95,7 +95,7 @@ export default function TranslatePanel() {
         <select
           value={sourceLang}
           onChange={(e) => setSourceLang(e.target.value)}
-          className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-violet-500"
+          className="bg-white/50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-violet-500 input-glow transition-all"
         >
           {LANG_OPTIONS.map((l) => (
             <option key={l.code} value={l.code}>{l.label}</option>
@@ -104,7 +104,7 @@ export default function TranslatePanel() {
 
         <button
           onClick={swapLanguages}
-          className="text-gray-400 hover:text-violet-500 dark:hover:text-violet-400 transition-colors p-1.5"
+          className="text-gray-400 hover:text-violet-500 dark:hover:text-violet-400 transition-all p-1.5 hover:rotate-180 duration-300"
           title="交換語言"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -116,7 +116,7 @@ export default function TranslatePanel() {
         <select
           value={targetLang}
           onChange={(e) => setTargetLang(e.target.value)}
-          className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-violet-500"
+          className="bg-white/50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-violet-500 input-glow transition-all"
         >
           {LANG_OPTIONS.map((l) => (
             <option key={l.code} value={l.code}>{l.label}</option>
@@ -125,7 +125,7 @@ export default function TranslatePanel() {
       </div>
 
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/30 border border-red-300 dark:border-red-700/50 rounded-lg p-3 text-sm text-red-600 dark:text-red-300 mb-4">
+        <div className="bg-red-50/80 dark:bg-red-900/20 border border-red-300/50 dark:border-red-700/30 rounded-lg p-3 text-sm text-red-600 dark:text-red-300 mb-4 backdrop-blur-sm">
           {error}
         </div>
       )}
@@ -136,7 +136,7 @@ export default function TranslatePanel() {
             value={sourceText}
             onChange={(e) => setSourceText(e.target.value)}
             placeholder="輸入要翻譯的文字..."
-            className="w-full h-40 sm:h-48 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-3 sm:p-4 text-sm resize-none focus:outline-none focus:border-violet-500 placeholder-gray-400 dark:placeholder-gray-500"
+            className="w-full h-40 sm:h-48 bg-white/50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 rounded-lg p-3 sm:p-4 text-sm resize-none focus:outline-none focus:border-violet-500 input-glow placeholder-gray-400 dark:placeholder-gray-500 transition-all"
           />
           <div className="absolute bottom-3 right-3 text-xs text-gray-400 dark:text-gray-600">
             {sourceText.length} chars
@@ -144,7 +144,7 @@ export default function TranslatePanel() {
         </div>
 
         <div className="relative">
-          <div className="w-full h-40 sm:h-48 bg-gray-50 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-lg p-3 sm:p-4 text-sm overflow-auto">
+          <div className="w-full h-40 sm:h-48 bg-white/30 dark:bg-white/[0.02] border border-gray-200/50 dark:border-white/10 rounded-lg p-3 sm:p-4 text-sm overflow-auto transition-all">
             {loading ? (
               <div className="flex items-center gap-2 text-gray-500">
                 <div className="w-4 h-4 border-2 border-violet-500 dark:border-violet-400 border-t-transparent rounded-full animate-spin" />
@@ -157,7 +157,7 @@ export default function TranslatePanel() {
           {translatedText && (
             <button
               onClick={copyResult}
-              className={`absolute bottom-3 right-3 text-xs transition-colors ${copied ? 'text-emerald-500' : 'text-gray-500 hover:text-violet-500 dark:hover:text-violet-400'}`}
+              className={`absolute bottom-3 right-3 text-xs transition-all ${copied ? 'text-emerald-500' : 'text-gray-500 hover:text-violet-500 dark:hover:text-violet-400'}`}
               title="複製結果"
             >
               {copied ? 'Copied!' : 'Copy'}

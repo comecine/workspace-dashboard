@@ -69,18 +69,18 @@ export default function CurrencyPanel() {
   const currencies = ['USD', 'TWD', 'CNY', 'JPY', 'EUR', 'HKD', 'SGD', 'KRW', 'GBP']
 
   return (
-    <section className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-5">
+    <section className="glass-card rounded-xl p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-          <span className="text-blue-500 dark:text-blue-400">$</span> Exchange Rates
+          <span className="text-blue-500 dark:text-blue-400 text-xl glow-blue">$</span> Exchange Rates
         </h2>
         {lastUpdate && (
-          <span className="text-xs text-gray-500">Updated: {lastUpdate}</span>
+          <span className="text-xs text-gray-500 dark:text-gray-500">Updated: {lastUpdate}</span>
         )}
       </div>
 
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/30 border border-red-300 dark:border-red-700/50 rounded-lg p-3 text-sm text-red-600 dark:text-red-300 mb-4">
+        <div className="bg-red-50/80 dark:bg-red-900/20 border border-red-300/50 dark:border-red-700/30 rounded-lg p-3 text-sm text-red-600 dark:text-red-300 mb-4 backdrop-blur-sm">
           {error}
         </div>
       )}
@@ -90,7 +90,7 @@ export default function CurrencyPanel() {
         {PAIRS.map(({ to, label }) => {
           const rate = rates ? rates[to] : null
           return (
-            <div key={label} className="bg-gray-100 dark:bg-gray-800/50 rounded-lg p-3 sm:p-4">
+            <div key={label} className="glass-inner rounded-lg p-3 sm:p-4 hover:scale-[1.02] transition-all duration-200">
               <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{label}</div>
               {loading ? (
                 <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded w-24 animate-pulse" />
@@ -107,7 +107,7 @@ export default function CurrencyPanel() {
       </div>
 
       {/* Converter */}
-      <div className="bg-gray-100 dark:bg-gray-800/50 rounded-lg p-3 sm:p-4">
+      <div className="glass-inner rounded-lg p-3 sm:p-4">
         <div className="text-sm text-gray-500 dark:text-gray-400 mb-3">Currency Converter</div>
         <div className="flex items-center gap-2">
           <div className="flex-1">
@@ -116,12 +116,12 @@ export default function CurrencyPanel() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="Amount"
-              className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+              className="w-full bg-white/50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 input-glow transition-all"
             />
             <select
               value={fromCurrency}
               onChange={(e) => setFromCurrency(e.target.value)}
-              className="mt-2 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+              className="mt-2 w-full bg-white/50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 input-glow transition-all"
             >
               {currencies.map((c) => (
                 <option key={c} value={c}>{c}</option>
@@ -131,7 +131,7 @@ export default function CurrencyPanel() {
 
           <button
             onClick={swapCurrencies}
-            className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors p-2"
+            className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-all p-2 hover:rotate-180 duration-300"
             title="Swap"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -140,13 +140,13 @@ export default function CurrencyPanel() {
           </button>
 
           <div className="flex-1">
-            <div className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm min-h-[38px]">
+            <div className="w-full bg-white/30 dark:bg-white/[0.02] border border-gray-200/50 dark:border-white/10 rounded-lg px-3 py-2 text-sm min-h-[38px] transition-all">
               {convertedAmount !== null ? convertedAmount.toFixed(toCurrency === 'TWD' ? 2 : 4) : '-'}
             </div>
             <select
               value={toCurrency}
               onChange={(e) => setToCurrency(e.target.value)}
-              className="mt-2 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+              className="mt-2 w-full bg-white/50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 input-glow transition-all"
             >
               {currencies.map((c) => (
                 <option key={c} value={c}>{c}</option>
@@ -157,7 +157,7 @@ export default function CurrencyPanel() {
       </div>
 
       {!hasExchangeRateKey() && (
-        <div className="mt-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700/50 rounded-lg p-3 text-sm text-yellow-700 dark:text-yellow-300">
+        <div className="mt-4 bg-yellow-50/80 dark:bg-yellow-900/20 border border-yellow-300/50 dark:border-yellow-700/30 rounded-lg p-3 text-sm text-yellow-700 dark:text-yellow-300 backdrop-blur-sm">
           Please set VITE_EXCHANGE_RATE_API_KEY in .env to enable exchange rates.
         </div>
       )}
