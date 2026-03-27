@@ -100,15 +100,10 @@ function StockRow({ symbol, meta, onRemove, onUpdateMeta }) {
           {typeof price === 'number' ? price.toLocaleString() : price}
         </span>
       </td>
-      <td className="py-3 px-3 text-right">
-        <div className="flex flex-col items-end gap-1">
-          <span className={`change-pill ${isUp ? 'change-pill-up' : 'change-pill-down'}`}>
-            {isUp ? '▲' : '▼'} {isUp ? '+' : ''}{changePercent}%
-          </span>
-          <span className={`text-xs tabular-nums ${isUp ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-            {isUp ? '+' : ''}{change}
-          </span>
-        </div>
+      <td className="py-3 px-2 text-right whitespace-nowrap">
+        <span className={`text-sm tabular-nums font-medium ${isUp ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+          {isUp ? '▲' : '▼'} {isUp ? '+' : ''}{changePercent}% / {isUp ? '+' : ''}{change}
+        </span>
       </td>
       <td className="py-3 px-2 text-right">
         {editingTarget ? (
