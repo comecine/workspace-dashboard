@@ -89,6 +89,26 @@ export default {
         }
       }
 
+      // ===== Rate History (D1) =====
+      if (path === '/api/rate-history') {
+        if (method === 'GET') {
+          const { results } = await env.DB.prepare(
+            'SELECT date, rate FROM rate_history ORDER BY date DESC LIMIT 14'
+          ).all();
+          return Response.json({ success: true, history: results.reverse() }, { headers: corsHeaders });
+        }
+
+        if (method === 'POST') {
+          const body = await request.json();
+          const { date, rate } = body;
+          if (!date || rate == null) return Response.json({ error: 'Missing date or rate' }, { status: 400, headers: corsHeaders });
+          await env.DB.prepare(
+            'INSERT OR REPLACE INTO rate_history (date, rate) VALUES (?, ?)'
+          ).bind(date, rate).run();
+          return Response.json({ success: true, date, rate }, { headers: corsHeaders });
+        }
+      }
+
       // ===== Stock Watchlist CRUD (D1) =====
       if (path === '/api/stocks') {
         // GET: list all stocks

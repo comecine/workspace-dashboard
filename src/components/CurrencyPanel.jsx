@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { getExchangeRateUrl, hasExchangeRateKey } from '../api'
+import { getExchangeRateUrl, hasExchangeRateKey, fetchRateHistory, saveRateToD1, hasRateHistoryApi } from '../api'
 
 const PAIRS = [
   { from: 'USD', to: 'TWD', label: 'USD / TWD', symbol: 'NT$' },
@@ -74,7 +74,7 @@ function Sparkline({ data, color = '#3b82f6', height = 48, className = '' }) {
   )
 }
 
-function getRateHistory() {
+function getLocalRateHistory() {
   try {
     const saved = localStorage.getItem('usd_twd_history')
     return saved ? JSON.parse(saved) : []
@@ -83,18 +83,15 @@ function getRateHistory() {
   }
 }
 
-function saveRateHistory(rate) {
+function saveLocalRateHistory(rate) {
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
-  const history = getRateHistory()
-
+  const history = getLocalRateHistory()
   const existing = history.findIndex(h => h.date === today)
   if (existing >= 0) {
     history[existing].rate = rate
   } else {
     history.push({ date: today, rate })
   }
-
-  // Keep last 14 days
   const recent = history.slice(-14)
   localStorage.setItem('usd_twd_history', JSON.stringify(recent))
   return recent
@@ -105,7 +102,26 @@ export default function CurrencyPanel() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [lastUpdate, setLastUpdate] = useState(null)
-  const [rateHistory, setRateHistory] = useState(getRateHistory)
+  const [rateHistory, setRateHistory] = useState(getLocalRateHistory)
+
+  // Load rate history from D1 on mount
+  useEffect(() => {
+    async function loadHistory() {
+      if (hasRateHistoryApi()) {
+        try {
+          const history = await fetchRateHistory()
+          if (history && history.length > 0) {
+            setRateHistory(history)
+            localStorage.setItem('usd_twd_history', JSON.stringify(history))
+            return
+          }
+        } catch (e) {
+          console.warn('D1 rate history fetch failed, using localStorage', e)
+        }
+      }
+    }
+    loadHistory()
+  }, [])
 
   const [amount, setAmount] = useState('1')
   const [fromCurrency, setFromCurrency] = useState('USD')
@@ -128,10 +144,16 @@ export default function CurrencyPanel() {
       setLastUpdate(new Date().toLocaleTimeString('zh-TW', { timeZone: 'Asia/Taipei' }))
       setError(null)
 
-      // Save TWD rate to history
+      // Save TWD rate to history (D1 + localStorage)
       if (json.conversion_rates?.TWD) {
-        const updated = saveRateHistory(json.conversion_rates.TWD)
+        const twdRate = json.conversion_rates.TWD
+        const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' })
+        const updated = saveLocalRateHistory(twdRate)
         setRateHistory(updated)
+        // Sync to D1
+        if (hasRateHistoryApi()) {
+          saveRateToD1(today, twdRate).catch(e => console.warn('D1 rate save failed', e))
+        }
       }
     } catch (e) {
       setError(e.message)

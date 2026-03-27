@@ -80,6 +80,34 @@ export async function deleteCalendarEvent(eventId) {
   return res.json()
 }
 
+// ===== Rate History API (D1) =====
+const getRateHistoryApiUrl = () => WORKER_URL ? `${WORKER_URL}/api/rate-history` : ''
+
+export function hasRateHistoryApi() {
+  return !!WORKER_URL
+}
+
+export async function fetchRateHistory() {
+  const base = getRateHistoryApiUrl()
+  if (!base) return null
+  const res = await fetch(base)
+  if (!res.ok) throw new Error(`Rate History API ${res.status}`)
+  const data = await res.json()
+  return data.success ? data.history : null
+}
+
+export async function saveRateToD1(date, rate) {
+  const base = getRateHistoryApiUrl()
+  if (!base) return null
+  const res = await fetch(base, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ date, rate }),
+  })
+  if (!res.ok) throw new Error(`Rate History API ${res.status}`)
+  return res.json()
+}
+
 // ===== Stock Watchlist API (D1) =====
 const getStocksApiUrl = () => WORKER_URL ? `${WORKER_URL}/api/stocks` : ''
 
