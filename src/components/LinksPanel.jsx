@@ -130,10 +130,10 @@ export default function LinksPanel() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-300/20 dark:border-white/10 text-xs text-gray-500 dark:text-gray-500">
-                <th className="py-2 px-2 text-left font-medium w-[25%]">名稱</th>
+                <th className="py-2 px-2 text-left font-medium w-[22%]">名稱</th>
                 <th className="py-2 px-2 text-left font-medium">網址</th>
-                <th className="py-2 px-2 text-left font-medium w-[30%]">說明</th>
-                <th className="py-2 px-1 w-14" />
+                <th className="py-2 px-2 text-left font-medium w-[25%]">說明</th>
+                <th className="py-2 px-1 w-12" />
               </tr>
             </thead>
             <tbody>
@@ -144,12 +144,12 @@ export default function LinksPanel() {
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 hover:text-orange-400 transition-colors"
+                      className="flex items-center gap-2 hover:text-orange-400 transition-colors whitespace-nowrap"
                     >
-                      <div className="link-icon w-7 h-7 rounded-md bg-orange-600/15 dark:bg-orange-500/15 text-orange-500 dark:text-orange-400 flex items-center justify-center text-xs font-bold shrink-0">
+                      <div className="link-icon w-6 h-6 rounded-md bg-orange-600/15 dark:bg-orange-500/15 text-orange-500 dark:text-orange-400 flex items-center justify-center text-[10px] font-bold shrink-0">
                         {link.icon}
                       </div>
-                      <span className="font-medium">{link.name}</span>
+                      <span className="font-medium text-xs">{link.name}</span>
                     </a>
                   </td>
                   <td className="py-2.5 px-2">
