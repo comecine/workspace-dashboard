@@ -39,6 +39,28 @@ function useStockApi(endpoint) {
   return { data, loading, error }
 }
 
+// Track which stocks have already been notified to avoid spam
+const notifiedSet = new Set(JSON.parse(localStorage.getItem('stock_notified') || '[]'))
+
+function sendPriceAlert(symbol, name, price, targetPrice) {
+  if (notifiedSet.has(symbol)) return
+  notifiedSet.add(symbol)
+  localStorage.setItem('stock_notified', JSON.stringify([...notifiedSet]))
+
+  if (Notification.permission === 'granted') {
+    new Notification(`${name} (${symbol}) 到價提醒`, {
+      body: `現價 ${price.toLocaleString()} 已達目標價 ${targetPrice}`,
+      icon: '🎯',
+      tag: `stock-${symbol}`,
+    })
+  }
+}
+
+function clearNotified(symbol) {
+  notifiedSet.delete(symbol)
+  localStorage.setItem('stock_notified', JSON.stringify([...notifiedSet]))
+}
+
 function StockRow({ symbol, meta, onRemove, onUpdateMeta, dragProps }) {
   const { data, loading, error } = useStockApi(`/intraday/quote/${symbol}`)
   const [confirmRemove, setConfirmRemove] = useState(false)
@@ -46,6 +68,7 @@ function StockRow({ symbol, meta, onRemove, onUpdateMeta, dragProps }) {
   const [editingNote, setEditingNote] = useState(false)
   const [targetInput, setTargetInput] = useState(meta.targetPrice || '')
   const [noteInput, setNoteInput] = useState(meta.note || '')
+  const [alertFired, setAlertFired] = useState(notifiedSet.has(symbol))
 
   const quote = data
   const price = quote?.closePrice ?? quote?.lastPrice ?? '-'
@@ -54,9 +77,23 @@ function StockRow({ symbol, meta, onRemove, onUpdateMeta, dragProps }) {
   const name = quote?.name ?? symbol
   const isUp = change >= 0
 
+  // Price alert check
+  useEffect(() => {
+    if (typeof price !== 'number' || !meta.targetPrice) return
+    const target = parseFloat(meta.targetPrice)
+    if (isNaN(target)) return
+    if (price >= target) {
+      sendPriceAlert(symbol, name, price, meta.targetPrice)
+      setAlertFired(true)
+    }
+  }, [price, meta.targetPrice, symbol, name])
+
   const saveTarget = () => {
     onUpdateMeta(symbol, { ...meta, targetPrice: targetInput })
     setEditingTarget(false)
+    // Reset alert when target changes
+    clearNotified(symbol)
+    setAlertFired(false)
   }
 
   const saveNote = () => {
@@ -124,10 +161,10 @@ function StockRow({ symbol, meta, onRemove, onUpdateMeta, dragProps }) {
         ) : (
           <span
             onClick={() => { setTargetInput(meta.targetPrice || ''); setEditingTarget(true) }}
-            className={`text-sm tabular-nums cursor-pointer hover:text-emerald-500 transition-colors ${meta.targetPrice ? '' : 'text-gray-400 dark:text-gray-600 text-xs'}`}
-            title="點擊設定目標價"
+            className={`text-sm tabular-nums cursor-pointer hover:text-emerald-500 transition-colors ${alertFired ? 'text-amber-500 dark:text-amber-400 font-medium' : meta.targetPrice ? '' : 'text-gray-400 dark:text-gray-600 text-xs'}`}
+            title={alertFired ? '已到達目標價！點擊修改' : '點擊設定目標價'}
           >
-            {meta.targetPrice || '---'}
+            {alertFired ? '🎯 ' : ''}{meta.targetPrice || '---'}
           </span>
         )}
       </td>
@@ -239,6 +276,13 @@ export default function StockPanel() {
   const [synced, setSynced] = useState(false)
   const [dragIdx, setDragIdx] = useState(null)
   const [overIdx, setOverIdx] = useState(null)
+
+  // Request notification permission on mount
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
+  }, [])
 
   const handleDragStart = (idx) => setDragIdx(idx)
   const handleDragOver = (e, idx) => { e.preventDefault(); if (idx !== overIdx) setOverIdx(idx) }
