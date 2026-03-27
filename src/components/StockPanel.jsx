@@ -102,12 +102,14 @@ function StockRow({ symbol, meta, onRemove, onUpdateMeta }) {
         </span>
       </td>
       {/* 漲跌 */}
-      <td className="py-3 px-2 text-right">
-        <span className={`change-pill ${isUp ? 'change-pill-up' : 'change-pill-down'}`}>
-          {isUp ? '▲' : '▼'} {isUp ? '+' : ''}{changePercent}%
-        </span>
-        <div className={`text-xs mt-0.5 tabular-nums ${isUp ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-          {isUp ? '+' : ''}{change}
+      <td className="py-3 px-3 text-right">
+        <div className="flex flex-col items-end gap-1">
+          <span className={`change-pill ${isUp ? 'change-pill-up' : 'change-pill-down'}`}>
+            {isUp ? '▲' : '▼'} {isUp ? '+' : ''}{changePercent}%
+          </span>
+          <span className={`text-xs tabular-nums ${isUp ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+            {isUp ? '+' : ''}{change}
+          </span>
         </div>
       </td>
       {/* 目標價 */}
