@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { fetchLinks, addLink as apiAddLink, updateLink as apiUpdateLink, removeLink as apiRemoveLink, hasLinksApi } from '../api'
 
 const DEFAULT_LINKS = [
   { id: '1', name: 'Google', url: 'https://google.com', icon: 'G', desc: '搜尋引擎' },
@@ -6,21 +7,53 @@ const DEFAULT_LINKS = [
 ]
 
 export default function LinksPanel() {
-  const [links, setLinks] = useState(() => {
-    const saved = localStorage.getItem('work_links')
-    if (saved) {
-      const parsed = JSON.parse(saved)
-      return parsed.map(l => ({ desc: '', ...l }))
-    }
-    return DEFAULT_LINKS
-  })
+  const [links, setLinks] = useState([])
   const [editing, setEditing] = useState(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({ name: '', url: '', icon: '', desc: '' })
+  const [synced, setSynced] = useState(false)
 
+  // Load from D1 on mount, fallback to localStorage
   useEffect(() => {
-    localStorage.setItem('work_links', JSON.stringify(links))
-  }, [links])
+    async function load() {
+      if (hasLinksApi()) {
+        try {
+          const dbLinks = await fetchLinks()
+          if (dbLinks) {
+            const mapped = dbLinks.map(l => ({
+              id: l.id,
+              name: l.name,
+              url: l.url,
+              icon: l.icon || l.name.charAt(0).toUpperCase(),
+              desc: l.desc || '',
+            }))
+            setLinks(mapped)
+            setSynced(true)
+            localStorage.setItem('work_links', JSON.stringify(mapped))
+            return
+          }
+        } catch (e) {
+          console.warn('D1 fetch failed, using localStorage', e)
+        }
+      }
+      // Fallback to localStorage
+      const saved = localStorage.getItem('work_links')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        setLinks(parsed.map(l => ({ desc: '', ...l })))
+      } else {
+        setLinks(DEFAULT_LINKS)
+      }
+    }
+    load()
+  }, [])
+
+  // Save to localStorage as cache
+  useEffect(() => {
+    if (links.length > 0 || synced) {
+      localStorage.setItem('work_links', JSON.stringify(links))
+    }
+  }, [links, synced])
 
   const resetForm = () => {
     setForm({ name: '', url: '', icon: '', desc: '' })
@@ -28,7 +61,7 @@ export default function LinksPanel() {
     setEditing(null)
   }
 
-  const addLink = () => {
+  const addLink = async () => {
     if (!form.name.trim() || !form.url.trim()) return
     const url = form.url.startsWith('http') ? form.url : `https://${form.url}`
     const newLink = {
@@ -40,22 +73,41 @@ export default function LinksPanel() {
     }
     setLinks([...links, newLink])
     resetForm()
+    // Sync to D1
+    if (hasLinksApi()) {
+      apiAddLink({ id: newLink.id, name: newLink.name, url: newLink.url, icon: newLink.icon, desc: newLink.desc })
+        .catch(e => console.warn('D1 add link failed', e))
+    }
   }
 
-  const updateLink = () => {
+  const handleUpdateLink = async () => {
     if (!form.name.trim() || !form.url.trim()) return
     const url = form.url.startsWith('http') ? form.url : `https://${form.url}`
+    const updated = {
+      name: form.name.trim(),
+      url,
+      icon: form.icon.trim() || form.name.charAt(0).toUpperCase(),
+      desc: form.desc.trim(),
+    }
     setLinks(links.map((l) =>
-      l.id === editing
-        ? { ...l, name: form.name.trim(), url, icon: form.icon.trim() || form.name.charAt(0).toUpperCase(), desc: form.desc.trim() }
-        : l
+      l.id === editing ? { ...l, ...updated } : l
     ))
+    const editingId = editing
     resetForm()
+    // Sync to D1
+    if (hasLinksApi()) {
+      apiUpdateLink({ id: editingId, ...updated })
+        .catch(e => console.warn('D1 update link failed', e))
+    }
   }
 
-  const removeLink = (id) => {
+  const handleRemoveLink = async (id) => {
     setLinks(links.filter((l) => l.id !== id))
     if (editing === id) resetForm()
+    // Sync to D1
+    if (hasLinksApi()) {
+      apiRemoveLink(id).catch(e => console.warn('D1 remove link failed', e))
+    }
   }
 
   const startEdit = (link) => {
@@ -110,12 +162,12 @@ export default function LinksPanel() {
               type="text"
               value={form.url}
               onChange={(e) => setForm({ ...form, url: e.target.value })}
-              onKeyDown={(e) => e.key === 'Enter' && (editing ? updateLink() : addLink())}
+              onKeyDown={(e) => e.key === 'Enter' && (editing ? handleUpdateLink() : addLink())}
               placeholder="https://..."
               className="flex-1 bg-white/50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-orange-500 input-glow transition-all"
             />
             <button
-              onClick={editing ? updateLink : addLink}
+              onClick={editing ? handleUpdateLink : addLink}
               className="bg-orange-600 hover:bg-orange-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium transition-all hover:shadow-lg hover:shadow-orange-500/20 active:scale-95"
             >
               {editing ? 'Save' : 'Add'}
@@ -176,7 +228,7 @@ export default function LinksPanel() {
                         edit
                       </button>
                       <button
-                        onClick={() => removeLink(link.id)}
+                        onClick={() => handleRemoveLink(link.id)}
                         className="text-gray-400 hover:text-red-500 dark:hover:text-red-400 text-xs transition-all"
                         title="Delete"
                       >

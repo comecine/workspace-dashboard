@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { getStockUrl, getStockHeaders, hasStockKey } from '../api'
+import { fetchStockWatchlist, addStockToWatchlist, updateStockMeta, removeStockFromWatchlist, hasStocksApi } from '../api'
 import { useCountUp } from '../hooks/useCountUp'
 
 function useStockApi(endpoint) {
@@ -90,18 +91,15 @@ function StockRow({ symbol, meta, onRemove, onUpdateMeta }) {
 
   return (
     <tr className="border-b border-gray-200/10 dark:border-white/5 hover:bg-white/5 dark:hover:bg-white/[0.03] transition-colors">
-      {/* 股票名稱 */}
       <td className="py-3 px-2">
         <div className="text-sm font-medium">{name}</div>
         <div className="text-xs text-gray-500 dark:text-gray-500">{symbol}</div>
       </td>
-      {/* 現價 */}
       <td className="py-3 px-2 text-right">
         <span className="text-sm font-bold tabular-nums">
           {typeof price === 'number' ? price.toLocaleString() : price}
         </span>
       </td>
-      {/* 漲跌 */}
       <td className="py-3 px-3 text-right">
         <div className="flex flex-col items-end gap-1">
           <span className={`change-pill ${isUp ? 'change-pill-up' : 'change-pill-down'}`}>
@@ -112,7 +110,6 @@ function StockRow({ symbol, meta, onRemove, onUpdateMeta }) {
           </span>
         </div>
       </td>
-      {/* 目標價 */}
       <td className="py-3 px-2 text-right">
         {editingTarget ? (
           <input
@@ -134,7 +131,6 @@ function StockRow({ symbol, meta, onRemove, onUpdateMeta }) {
           </span>
         )}
       </td>
-      {/* 備註 */}
       <td className="py-3 px-2">
         {editingNote ? (
           <input
@@ -157,7 +153,6 @@ function StockRow({ symbol, meta, onRemove, onUpdateMeta }) {
           </span>
         )}
       </td>
-      {/* 刪除 */}
       <td className="py-3 px-1 text-center">
         <button
           onClick={() => {
@@ -237,26 +232,57 @@ function TaiexCard() {
 }
 
 export default function StockPanel() {
-  const [watchlist, setWatchlist] = useState(() => {
-    const saved = localStorage.getItem('stock_watchlist')
-    return saved ? JSON.parse(saved) : ['2330']
-  })
-  const [stockMeta, setStockMeta] = useState(() => {
-    const saved = localStorage.getItem('stock_meta')
-    return saved ? JSON.parse(saved) : {}
-  })
+  const [watchlist, setWatchlist] = useState([])
+  const [stockMeta, setStockMeta] = useState({})
   const [input, setInput] = useState('')
   const [inputError, setInputError] = useState('')
+  const [synced, setSynced] = useState(false)
 
+  // Load from D1 on mount, fallback to localStorage
   useEffect(() => {
-    localStorage.setItem('stock_watchlist', JSON.stringify(watchlist))
-  }, [watchlist])
+    async function load() {
+      if (hasStocksApi()) {
+        try {
+          const stocks = await fetchStockWatchlist()
+          if (stocks) {
+            const symbols = stocks.map(s => s.symbol)
+            const meta = {}
+            stocks.forEach(s => {
+              meta[s.symbol] = { targetPrice: s.target_price || '', note: s.note || '' }
+            })
+            setWatchlist(symbols)
+            setStockMeta(meta)
+            setSynced(true)
+            // Also update localStorage as cache
+            localStorage.setItem('stock_watchlist', JSON.stringify(symbols))
+            localStorage.setItem('stock_meta', JSON.stringify(meta))
+            return
+          }
+        } catch (e) {
+          console.warn('D1 fetch failed, using localStorage', e)
+        }
+      }
+      // Fallback to localStorage
+      const saved = localStorage.getItem('stock_watchlist')
+      setWatchlist(saved ? JSON.parse(saved) : ['2330'])
+      const savedMeta = localStorage.getItem('stock_meta')
+      setStockMeta(savedMeta ? JSON.parse(savedMeta) : {})
+    }
+    load()
+  }, [])
+
+  // Save to localStorage as cache
+  useEffect(() => {
+    if (watchlist.length > 0 || synced) {
+      localStorage.setItem('stock_watchlist', JSON.stringify(watchlist))
+    }
+  }, [watchlist, synced])
 
   useEffect(() => {
     localStorage.setItem('stock_meta', JSON.stringify(stockMeta))
   }, [stockMeta])
 
-  const addStock = () => {
+  const addStock = async () => {
     const symbol = input.trim()
     if (!symbol) return
     if (!/^\d{4,6}$/.test(symbol)) {
@@ -270,17 +296,29 @@ export default function StockPanel() {
     setWatchlist([...watchlist, symbol])
     setInput('')
     setInputError('')
+    // Sync to D1
+    if (hasStocksApi()) {
+      addStockToWatchlist(symbol).catch(e => console.warn('D1 add failed', e))
+    }
   }
 
-  const removeStock = (symbol) => {
+  const removeStock = async (symbol) => {
     setWatchlist(watchlist.filter((s) => s !== symbol))
     const newMeta = { ...stockMeta }
     delete newMeta[symbol]
     setStockMeta(newMeta)
+    // Sync to D1
+    if (hasStocksApi()) {
+      removeStockFromWatchlist(symbol).catch(e => console.warn('D1 remove failed', e))
+    }
   }
 
-  const updateMeta = (symbol, meta) => {
+  const handleUpdateMeta = async (symbol, meta) => {
     setStockMeta({ ...stockMeta, [symbol]: meta })
+    // Sync to D1
+    if (hasStocksApi()) {
+      updateStockMeta(symbol, meta.targetPrice || '', meta.note || '').catch(e => console.warn('D1 update failed', e))
+    }
   }
 
   return (
@@ -317,7 +355,6 @@ export default function StockPanel() {
         {inputError && <div className="text-xs text-red-500 dark:text-red-400 mt-1">{inputError}</div>}
       </div>
 
-      {/* Stock Table */}
       {watchlist.length > 0 ? (
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm">
@@ -338,7 +375,7 @@ export default function StockPanel() {
                   symbol={symbol}
                   meta={stockMeta[symbol] || { targetPrice: '', note: '' }}
                   onRemove={removeStock}
-                  onUpdateMeta={updateMeta}
+                  onUpdateMeta={handleUpdateMeta}
                 />
               ))}
             </tbody>

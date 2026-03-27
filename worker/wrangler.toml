@@ -5,3 +5,8 @@ account_id = "01a543f1afca24d791ba7b5d1f0014c2"
 
 [vars]
 ALLOWED_ORIGIN = "https://workspace-dashboard.pages.dev"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "workspace-dashboard-db"
+database_id = "297ac7e6-b2b4-4135-95c7-c1ac8b17ad32"

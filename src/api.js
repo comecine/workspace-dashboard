@@ -79,3 +79,99 @@ export async function deleteCalendarEvent(eventId) {
   if (!res.ok) throw new Error(`Calendar API ${res.status}`)
   return res.json()
 }
+
+// ===== Stock Watchlist API (D1) =====
+const getStocksApiUrl = () => WORKER_URL ? `${WORKER_URL}/api/stocks` : ''
+
+export function hasStocksApi() {
+  return !!WORKER_URL
+}
+
+export async function fetchStockWatchlist() {
+  const base = getStocksApiUrl()
+  if (!base) return null
+  const res = await fetch(base)
+  if (!res.ok) throw new Error(`Stocks API ${res.status}`)
+  const data = await res.json()
+  return data.success ? data.stocks : null
+}
+
+export async function addStockToWatchlist(symbol, targetPrice = '', note = '') {
+  const base = getStocksApiUrl()
+  if (!base) return null
+  const res = await fetch(base, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ symbol, target_price: targetPrice, note }),
+  })
+  if (!res.ok) throw new Error(`Stocks API ${res.status}`)
+  return res.json()
+}
+
+export async function updateStockMeta(symbol, targetPrice, note) {
+  const base = getStocksApiUrl()
+  if (!base) return null
+  const res = await fetch(base, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ symbol, target_price: targetPrice, note }),
+  })
+  if (!res.ok) throw new Error(`Stocks API ${res.status}`)
+  return res.json()
+}
+
+export async function removeStockFromWatchlist(symbol) {
+  const base = getStocksApiUrl()
+  if (!base) return null
+  const res = await fetch(`${base}?symbol=${encodeURIComponent(symbol)}`, { method: 'DELETE' })
+  if (!res.ok) throw new Error(`Stocks API ${res.status}`)
+  return res.json()
+}
+
+// ===== Work Links API (D1) =====
+const getLinksApiUrl = () => WORKER_URL ? `${WORKER_URL}/api/links` : ''
+
+export function hasLinksApi() {
+  return !!WORKER_URL
+}
+
+export async function fetchLinks() {
+  const base = getLinksApiUrl()
+  if (!base) return null
+  const res = await fetch(base)
+  if (!res.ok) throw new Error(`Links API ${res.status}`)
+  const data = await res.json()
+  return data.success ? data.links : null
+}
+
+export async function addLink(link) {
+  const base = getLinksApiUrl()
+  if (!base) return null
+  const res = await fetch(base, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(link),
+  })
+  if (!res.ok) throw new Error(`Links API ${res.status}`)
+  return res.json()
+}
+
+export async function updateLink(link) {
+  const base = getLinksApiUrl()
+  if (!base) return null
+  const res = await fetch(base, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(link),
+  })
+  if (!res.ok) throw new Error(`Links API ${res.status}`)
+  return res.json()
+}
+
+export async function removeLink(id) {
+  const base = getLinksApiUrl()
+  if (!base) return null
+  const res = await fetch(`${base}?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+  if (!res.ok) throw new Error(`Links API ${res.status}`)
+  return res.json()
+}
