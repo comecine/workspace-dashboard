@@ -89,6 +89,22 @@ export default {
         }
       }
 
+      // ===== Widget Layout (D1) =====
+      if (path === '/api/layout') {
+        if (method === 'GET') {
+          const row = await env.DB.prepare('SELECT layout FROM widget_layout WHERE id = ?').bind('default').first();
+          return Response.json({ success: true, layout: row ? JSON.parse(row.layout) : null }, { headers: corsHeaders });
+        }
+        if (method === 'POST') {
+          const body = await request.json();
+          const layoutStr = JSON.stringify(body.layout);
+          await env.DB.prepare(
+            'INSERT OR REPLACE INTO widget_layout (id, layout, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)'
+          ).bind('default', layoutStr).run();
+          return Response.json({ success: true }, { headers: corsHeaders });
+        }
+      }
+
       // ===== Rate History (D1) =====
       if (path === '/api/rate-history') {
         if (method === 'GET') {

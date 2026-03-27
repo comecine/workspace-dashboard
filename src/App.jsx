@@ -1,10 +1,82 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout'
+import 'react-grid-layout/css/styles.css'
 import StockPanel from './components/StockPanel'
 import CurrencyPanel from './components/CurrencyPanel'
 import TranslatePanel from './components/TranslatePanel'
 import LinksPanel from './components/LinksPanel'
 import CalendarPanel from './components/CalendarPanel'
 import ReminderBar from './components/ReminderBar'
+import { fetchLayout, saveLayout, hasLayoutApi } from './api'
+
+const DEFAULT_LAYOUTS = {
+  lg: [
+    { i: 'stocks', x: 0, y: 0, w: 1, h: 5, minW: 1, minH: 3 },
+    { i: 'links', x: 1, y: 0, w: 1, h: 5, minW: 1, minH: 2 },
+    { i: 'calendar', x: 0, y: 5, w: 1, h: 5, minW: 1, minH: 3 },
+    { i: 'currency', x: 1, y: 5, w: 1, h: 5, minW: 1, minH: 3 },
+    { i: 'translate', x: 0, y: 10, w: 2, h: 4, minW: 1, minH: 3 },
+  ],
+  md: [
+    { i: 'stocks', x: 0, y: 0, w: 1, h: 5, minW: 1, minH: 3 },
+    { i: 'links', x: 1, y: 0, w: 1, h: 5, minW: 1, minH: 2 },
+    { i: 'calendar', x: 0, y: 5, w: 1, h: 5, minW: 1, minH: 3 },
+    { i: 'currency', x: 1, y: 5, w: 1, h: 5, minW: 1, minH: 3 },
+    { i: 'translate', x: 0, y: 10, w: 2, h: 4, minW: 1, minH: 3 },
+  ],
+  sm: [
+    { i: 'stocks', x: 0, y: 0, w: 1, h: 5, minW: 1, minH: 3 },
+    { i: 'links', x: 0, y: 5, w: 1, h: 4, minW: 1, minH: 2 },
+    { i: 'calendar', x: 0, y: 9, w: 1, h: 5, minW: 1, minH: 3 },
+    { i: 'currency', x: 0, y: 14, w: 1, h: 5, minW: 1, minH: 3 },
+    { i: 'translate', x: 0, y: 19, w: 1, h: 4, minW: 1, minH: 3 },
+  ],
+}
+
+const WIDGETS = [
+  { key: 'stocks', Component: StockPanel },
+  { key: 'links', Component: LinksPanel },
+  { key: 'calendar', Component: CalendarPanel },
+  { key: 'currency', Component: CurrencyPanel },
+  { key: 'translate', Component: TranslatePanel },
+]
+
+function WidgetGrid({ layouts, onLayoutChange }) {
+  const { containerRef, width: containerWidth, mounted } = useContainerWidth()
+
+  return (
+    <div ref={containerRef}>
+      {mounted && containerWidth > 0 && (
+        <ResponsiveGridLayout
+          width={containerWidth}
+          className="widget-grid"
+          layouts={layouts}
+          breakpoints={{ lg: 1024, md: 768, sm: 0 }}
+          cols={{ lg: 2, md: 2, sm: 1 }}
+          rowHeight={80}
+          margin={[16, 16]}
+          containerPadding={[0, 0]}
+          onLayoutChange={onLayoutChange}
+          draggableHandle=".widget-drag-handle"
+          resizeHandles={['se']}
+          useCSSTransforms={true}
+          compactType="vertical"
+        >
+          {WIDGETS.map(({ key, Component }) => (
+            <div key={key} className="widget-wrapper">
+              <div className="widget-drag-handle" title="拖拉移動">
+                <span>⠿</span>
+              </div>
+              <div className="widget-content">
+                <Component />
+              </div>
+            </div>
+          ))}
+        </ResponsiveGridLayout>
+      )}
+    </div>
+  )
+}
 
 function App() {
   const [now, setNow] = useState(new Date())
@@ -12,6 +84,35 @@ function App() {
     const saved = localStorage.getItem('theme')
     return saved ? saved === 'dark' : true
   })
+  const [layouts, setLayouts] = useState(() => {
+    try {
+      const saved = localStorage.getItem('widget_layouts')
+      return saved ? JSON.parse(saved) : DEFAULT_LAYOUTS
+    } catch {
+      return DEFAULT_LAYOUTS
+    }
+  })
+  const [layoutReady, setLayoutReady] = useState(false)
+  const saveTimerRef = useRef(null)
+
+  // Load layout from D1
+  useEffect(() => {
+    async function load() {
+      if (hasLayoutApi()) {
+        try {
+          const saved = await fetchLayout()
+          if (saved) {
+            setLayouts(saved)
+            localStorage.setItem('widget_layouts', JSON.stringify(saved))
+          }
+        } catch (e) {
+          console.warn('D1 layout fetch failed', e)
+        }
+      }
+      setLayoutReady(true)
+    }
+    load()
+  }, [])
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000)
@@ -22,6 +123,26 @@ function App() {
     document.documentElement.classList.toggle('dark', dark)
     localStorage.setItem('theme', dark ? 'dark' : 'light')
   }, [dark])
+
+  const onLayoutChange = useCallback((layout, allLayouts) => {
+    setLayouts(allLayouts)
+    localStorage.setItem('widget_layouts', JSON.stringify(allLayouts))
+    // Debounce D1 save
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = setTimeout(() => {
+      if (hasLayoutApi()) {
+        saveLayout(allLayouts).catch(e => console.warn('D1 layout save failed', e))
+      }
+    }, 1000)
+  }, [])
+
+  const resetLayout = useCallback(() => {
+    setLayouts({ ...DEFAULT_LAYOUTS })
+    localStorage.setItem('widget_layouts', JSON.stringify(DEFAULT_LAYOUTS))
+    if (hasLayoutApi()) {
+      saveLayout(DEFAULT_LAYOUTS).catch(e => console.warn('D1 layout reset failed', e))
+    }
+  }, [])
 
   const dateStr = now.toLocaleString('zh-TW', {
     timeZone: 'Asia/Taipei',
@@ -73,6 +194,13 @@ function App() {
             <span>{seconds}</span>
           </time>
           <button
+            onClick={resetLayout}
+            className="text-xs text-gray-500 hover:text-amber-500 transition-colors hidden sm:block"
+            title="重置佈局"
+          >
+            &#8634;
+          </button>
+          <button
             onClick={() => setDark(!dark)}
             className="theme-btn w-9 h-9 rounded-xl bg-white/50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/10 flex items-center justify-center text-base btn-glow"
             title={dark ? '切換為亮色模式' : '切換為暗色模式'}
@@ -94,23 +222,11 @@ function App() {
         <span>{seconds}</span>
       </div>
 
-      {/* Main Grid */}
-      <main className="relative z-10 p-3 sm:p-4 md:p-6 grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 lg:grid-cols-2">
-        <div className="animate-fade-slide-up stagger-1">
-          <StockPanel />
-        </div>
-        <div className="animate-fade-slide-up stagger-2">
-          <LinksPanel />
-        </div>
-        <div className="animate-fade-slide-up stagger-3">
-          <CalendarPanel />
-        </div>
-        <div className="animate-fade-slide-up stagger-4">
-          <CurrencyPanel />
-        </div>
-        <div className="lg:col-span-2 animate-fade-slide-up stagger-5">
-          <TranslatePanel />
-        </div>
+      {/* Widget Grid */}
+      <main className="relative z-10 p-3 sm:p-4 md:p-6">
+        {layoutReady && (
+          <WidgetGrid layouts={layouts} onLayoutChange={onLayoutChange} />
+        )}
       </main>
     </div>
   )

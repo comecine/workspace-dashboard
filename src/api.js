@@ -80,6 +80,34 @@ export async function deleteCalendarEvent(eventId) {
   return res.json()
 }
 
+// ===== Widget Layout API (D1) =====
+const getLayoutApiUrl = () => WORKER_URL ? `${WORKER_URL}/api/layout` : ''
+
+export function hasLayoutApi() {
+  return !!WORKER_URL
+}
+
+export async function fetchLayout() {
+  const base = getLayoutApiUrl()
+  if (!base) return null
+  const res = await fetch(base)
+  if (!res.ok) throw new Error(`Layout API ${res.status}`)
+  const data = await res.json()
+  return data.success ? data.layout : null
+}
+
+export async function saveLayout(layout) {
+  const base = getLayoutApiUrl()
+  if (!base) return null
+  const res = await fetch(base, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ layout }),
+  })
+  if (!res.ok) throw new Error(`Layout API ${res.status}`)
+  return res.json()
+}
+
 // ===== Rate History API (D1) =====
 const getRateHistoryApiUrl = () => WORKER_URL ? `${WORKER_URL}/api/rate-history` : ''
 
