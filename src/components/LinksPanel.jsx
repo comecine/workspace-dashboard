@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { fetchLinks, addLink as apiAddLink, updateLink as apiUpdateLink, removeLink as apiRemoveLink, hasLinksApi } from '../api'
+import { fetchLinks, addLink as apiAddLink, updateLink as apiUpdateLink, removeLink as apiRemoveLink, reorderLinks, hasLinksApi } from '../api'
 
 const DEFAULT_LINKS = [
   { id: '1', name: 'Google', url: 'https://google.com', icon: 'G', desc: '搜尋引擎' },
@@ -12,6 +12,8 @@ export default function LinksPanel() {
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({ name: '', url: '', icon: '', desc: '' })
   const [synced, setSynced] = useState(false)
+  const [dragIdx, setDragIdx] = useState(null)
+  const [overIdx, setOverIdx] = useState(null)
 
   // Load from D1 on mount, fallback to localStorage
   useEffect(() => {
@@ -116,6 +118,39 @@ export default function LinksPanel() {
     setForm({ name: link.name, url: link.url, icon: link.icon, desc: link.desc || '' })
   }
 
+  const handleDragStart = (idx) => {
+    setDragIdx(idx)
+  }
+
+  const handleDragOver = (e, idx) => {
+    e.preventDefault()
+    if (idx !== overIdx) setOverIdx(idx)
+  }
+
+  const handleDrop = (idx) => {
+    if (dragIdx === null || dragIdx === idx) {
+      setDragIdx(null)
+      setOverIdx(null)
+      return
+    }
+    const updated = [...links]
+    const [moved] = updated.splice(dragIdx, 1)
+    updated.splice(idx, 0, moved)
+    setLinks(updated)
+    setDragIdx(null)
+    setOverIdx(null)
+    // Sync order to D1
+    if (hasLinksApi()) {
+      const order = updated.map((l, i) => ({ id: l.id, sort_order: i }))
+      reorderLinks(order).catch(e => console.warn('D1 reorder failed', e))
+    }
+  }
+
+  const handleDragEnd = () => {
+    setDragIdx(null)
+    setOverIdx(null)
+  }
+
   return (
     <section className="glass-card card-stripe card-stripe-orange rounded-xl p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
@@ -182,6 +217,7 @@ export default function LinksPanel() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-300/20 dark:border-white/10 text-xs text-gray-500 dark:text-gray-500">
+                <th className="py-2 px-1 w-6" />
                 <th className="py-2 px-2 text-left font-medium w-[22%]">名稱</th>
                 <th className="py-2 px-2 text-left font-medium">網址</th>
                 <th className="py-2 px-2 text-left font-medium w-[25%]">說明</th>
@@ -189,8 +225,19 @@ export default function LinksPanel() {
               </tr>
             </thead>
             <tbody>
-              {links.map((link) => (
-                <tr key={link.id} className="border-b border-gray-200/10 dark:border-white/5 hover:bg-white/5 dark:hover:bg-white/[0.03] transition-colors group">
+              {links.map((link, idx) => (
+                <tr
+                  key={link.id}
+                  draggable
+                  onDragStart={() => handleDragStart(idx)}
+                  onDragOver={(e) => handleDragOver(e, idx)}
+                  onDrop={() => handleDrop(idx)}
+                  onDragEnd={handleDragEnd}
+                  className={`border-b border-gray-200/10 dark:border-white/5 hover:bg-white/5 dark:hover:bg-white/[0.03] transition-colors group cursor-grab active:cursor-grabbing ${dragIdx === idx ? 'opacity-30' : ''} ${overIdx === idx && dragIdx !== idx ? 'border-t-2 !border-t-orange-400' : ''}`}
+                >
+                  <td className="py-2.5 px-1 text-center text-gray-400 dark:text-gray-600 select-none">
+                    <span className="text-[10px] opacity-50 group-hover:opacity-100 transition-opacity">⠿</span>
+                  </td>
                   <td className="py-2.5 px-2">
                     <a
                       href={link.url}

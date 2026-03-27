@@ -168,6 +168,18 @@ export async function updateLink(link) {
   return res.json()
 }
 
+export async function reorderLinks(order) {
+  const base = getLinksApiUrl()
+  if (!base) return null
+  const res = await fetch(base, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ order }),
+  })
+  if (!res.ok) throw new Error(`Links API ${res.status}`)
+  return res.json()
+}
+
 export async function removeLink(id) {
   const base = getLinksApiUrl()
   if (!base) return null

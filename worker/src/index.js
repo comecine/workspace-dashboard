@@ -165,6 +165,18 @@ export default {
           return Response.json({ success: true, id }, { headers: corsHeaders });
         }
 
+        // PATCH: reorder links (batch update sort_order)
+        if (method === 'PATCH') {
+          const body = await request.json();
+          const { order } = body; // array of { id, sort_order }
+          if (!order || !Array.isArray(order)) return Response.json({ error: 'Missing order array' }, { status: 400, headers: corsHeaders });
+          const stmts = order.map(({ id, sort_order }) =>
+            env.DB.prepare('UPDATE work_links SET sort_order = ? WHERE id = ?').bind(sort_order, id)
+          );
+          await env.DB.batch(stmts);
+          return Response.json({ success: true }, { headers: corsHeaders });
+        }
+
         // DELETE: remove a link
         if (method === 'DELETE') {
           const id = url.searchParams.get('id');
