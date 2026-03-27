@@ -6,7 +6,6 @@ function useStockApi(endpoint) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [lastUpdate, setLastUpdate] = useState(null)
 
   const fetchData = useCallback(async () => {
     if (!hasStockKey()) {
@@ -22,7 +21,6 @@ function useStockApi(endpoint) {
       if (!res.ok) throw new Error(`API ${res.status}`)
       const json = await res.json()
       setData(json)
-      setLastUpdate(new Date().toLocaleTimeString('zh-TW', { timeZone: 'Asia/Taipei' }))
       setError(null)
     } catch (e) {
       setError(e.message)
@@ -37,49 +35,16 @@ function useStockApi(endpoint) {
     return () => clearInterval(interval)
   }, [fetchData])
 
-  return { data, loading, error, lastUpdate, refetch: fetchData }
+  return { data, loading, error }
 }
 
-function StockCard({ symbol, onRemove }) {
+function StockRow({ symbol, meta, onRemove, onUpdateMeta }) {
   const { data, loading, error } = useStockApi(`/intraday/quote/${symbol}`)
   const [confirmRemove, setConfirmRemove] = useState(false)
-  const [pulseClass, setPulseClass] = useState('')
-  const prevPriceRef = useRef(null)
-
-  useEffect(() => {
-    if (!data) return
-    const price = data?.closePrice ?? data?.lastPrice
-    if (price == null) return
-    if (prevPriceRef.current !== null && prevPriceRef.current !== price) {
-      setPulseClass(price > prevPriceRef.current ? 'price-pulse-up' : 'price-pulse-down')
-      const timer = setTimeout(() => setPulseClass(''), 1200)
-      return () => clearTimeout(timer)
-    }
-    prevPriceRef.current = price
-  }, [data])
-
-  if (loading) {
-    return (
-      <div className="glass-inner rounded-lg p-4">
-        <div className="h-4 skeleton-shimmer w-20 mb-2" />
-        <div className="h-6 skeleton-shimmer w-24" />
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="glass-inner rounded-lg p-4 text-red-500 dark:text-red-400 text-sm flex items-center justify-between">
-        <span>{symbol}: {error}</span>
-        <button
-          onClick={() => onRemove(symbol)}
-          className="text-gray-400 hover:text-red-500 transition-all text-sm ml-2"
-        >
-          x
-        </button>
-      </div>
-    )
-  }
+  const [editingTarget, setEditingTarget] = useState(false)
+  const [editingNote, setEditingNote] = useState(false)
+  const [targetInput, setTargetInput] = useState(meta.targetPrice || '')
+  const [noteInput, setNoteInput] = useState(meta.note || '')
 
   const quote = data
   const price = quote?.closePrice ?? quote?.lastPrice ?? '-'
@@ -88,36 +53,122 @@ function StockCard({ symbol, onRemove }) {
   const name = quote?.name ?? symbol
   const isUp = change >= 0
 
+  const saveTarget = () => {
+    onUpdateMeta(symbol, { ...meta, targetPrice: targetInput })
+    setEditingTarget(false)
+  }
+
+  const saveNote = () => {
+    onUpdateMeta(symbol, { ...meta, note: noteInput })
+    setEditingNote(false)
+  }
+
+  if (loading) {
+    return (
+      <tr className="border-b border-gray-200/10 dark:border-white/5">
+        <td className="py-3 px-2"><div className="h-4 skeleton-shimmer w-16" /></td>
+        <td className="py-3 px-2"><div className="h-4 skeleton-shimmer w-14" /></td>
+        <td className="py-3 px-2"><div className="h-4 skeleton-shimmer w-16" /></td>
+        <td className="py-3 px-2"><div className="h-4 skeleton-shimmer w-14" /></td>
+        <td className="py-3 px-2"><div className="h-4 skeleton-shimmer w-20" /></td>
+        <td className="py-3 px-2" />
+      </tr>
+    )
+  }
+
+  if (error) {
+    return (
+      <tr className="border-b border-gray-200/10 dark:border-white/5">
+        <td className="py-3 px-2 text-sm">{symbol}</td>
+        <td colSpan={4} className="py-3 px-2 text-red-500 dark:text-red-400 text-sm">{error}</td>
+        <td className="py-3 px-2">
+          <button onClick={() => onRemove(symbol)} className="text-gray-400 hover:text-red-500 text-xs">x</button>
+        </td>
+      </tr>
+    )
+  }
+
   return (
-    <div className={`group stock-card ${isUp ? 'stock-card-up' : 'stock-card-down'} glass-inner rounded-lg p-4 transition-all duration-200 ${pulseClass}`}>
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500 dark:text-gray-400">{symbol}</span>
-            <span className="text-sm font-medium">{name}</span>
-          </div>
-          <div className="flex items-baseline gap-3 mt-1">
-            <span className="text-2xl font-bold tabular-nums">{typeof price === 'number' ? price.toLocaleString() : price}</span>
-            <span className={`change-pill ${isUp ? 'change-pill-up' : 'change-pill-down'}`}>
-              {isUp ? '▲' : '▼'} {isUp ? '+' : ''}{changePercent}%
-            </span>
-          </div>
-          <div className={`text-xs mt-1 ${isUp ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-            {isUp ? '+' : ''}{change}
-          </div>
+    <tr className="border-b border-gray-200/10 dark:border-white/5 hover:bg-white/5 dark:hover:bg-white/[0.03] transition-colors">
+      {/* 股票名稱 */}
+      <td className="py-3 px-2">
+        <div className="text-sm font-medium">{name}</div>
+        <div className="text-xs text-gray-500 dark:text-gray-500">{symbol}</div>
+      </td>
+      {/* 現價 */}
+      <td className="py-3 px-2 text-right">
+        <span className="text-sm font-bold tabular-nums">
+          {typeof price === 'number' ? price.toLocaleString() : price}
+        </span>
+      </td>
+      {/* 漲跌 */}
+      <td className="py-3 px-2 text-right">
+        <span className={`change-pill ${isUp ? 'change-pill-up' : 'change-pill-down'}`}>
+          {isUp ? '▲' : '▼'} {isUp ? '+' : ''}{changePercent}%
+        </span>
+        <div className={`text-xs mt-0.5 tabular-nums ${isUp ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+          {isUp ? '+' : ''}{change}
         </div>
+      </td>
+      {/* 目標價 */}
+      <td className="py-3 px-2 text-right">
+        {editingTarget ? (
+          <input
+            type="text"
+            value={targetInput}
+            onChange={(e) => setTargetInput(e.target.value)}
+            onBlur={saveTarget}
+            onKeyDown={(e) => e.key === 'Enter' && saveTarget()}
+            autoFocus
+            className="w-20 bg-white/50 dark:bg-white/5 border border-emerald-500/50 rounded px-2 py-0.5 text-xs text-right focus:outline-none tabular-nums"
+          />
+        ) : (
+          <span
+            onClick={() => { setTargetInput(meta.targetPrice || ''); setEditingTarget(true) }}
+            className={`text-sm tabular-nums cursor-pointer hover:text-emerald-500 transition-colors ${meta.targetPrice ? '' : 'text-gray-400 dark:text-gray-600 text-xs'}`}
+            title="點擊設定目標價"
+          >
+            {meta.targetPrice || '---'}
+          </span>
+        )}
+      </td>
+      {/* 備註 */}
+      <td className="py-3 px-2">
+        {editingNote ? (
+          <input
+            type="text"
+            value={noteInput}
+            onChange={(e) => setNoteInput(e.target.value)}
+            onBlur={saveNote}
+            onKeyDown={(e) => e.key === 'Enter' && saveNote()}
+            autoFocus
+            className="w-full bg-white/50 dark:bg-white/5 border border-emerald-500/50 rounded px-2 py-0.5 text-xs focus:outline-none"
+            placeholder="輸入備註..."
+          />
+        ) : (
+          <span
+            onClick={() => { setNoteInput(meta.note || ''); setEditingNote(true) }}
+            className={`text-xs cursor-pointer hover:text-emerald-500 transition-colors line-clamp-2 ${meta.note ? '' : 'text-gray-400 dark:text-gray-600'}`}
+            title="點擊編輯備註"
+          >
+            {meta.note || '---'}
+          </span>
+        )}
+      </td>
+      {/* 刪除 */}
+      <td className="py-3 px-1 text-center">
         <button
           onClick={() => {
             if (confirmRemove) { onRemove(symbol) }
             else { setConfirmRemove(true); setTimeout(() => setConfirmRemove(false), 3000) }
           }}
-          className={`text-sm transition-all ${confirmRemove ? 'text-red-500 dark:text-red-400 font-medium' : 'text-gray-400 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400'}`}
-          title="Remove"
+          className={`text-xs transition-all ${confirmRemove ? 'text-red-500 font-medium' : 'text-gray-400 dark:text-gray-600 hover:text-red-500'}`}
+          title="刪除"
         >
-          {confirmRemove ? 'Delete?' : 'x'}
+          {confirmRemove ? '確定?' : 'x'}
         </button>
-      </div>
-    </div>
+      </td>
+    </tr>
   )
 }
 
@@ -188,12 +239,20 @@ export default function StockPanel() {
     const saved = localStorage.getItem('stock_watchlist')
     return saved ? JSON.parse(saved) : ['2330']
   })
+  const [stockMeta, setStockMeta] = useState(() => {
+    const saved = localStorage.getItem('stock_meta')
+    return saved ? JSON.parse(saved) : {}
+  })
   const [input, setInput] = useState('')
   const [inputError, setInputError] = useState('')
 
   useEffect(() => {
     localStorage.setItem('stock_watchlist', JSON.stringify(watchlist))
   }, [watchlist])
+
+  useEffect(() => {
+    localStorage.setItem('stock_meta', JSON.stringify(stockMeta))
+  }, [stockMeta])
 
   const addStock = () => {
     const symbol = input.trim()
@@ -213,6 +272,13 @@ export default function StockPanel() {
 
   const removeStock = (symbol) => {
     setWatchlist(watchlist.filter((s) => s !== symbol))
+    const newMeta = { ...stockMeta }
+    delete newMeta[symbol]
+    setStockMeta(newMeta)
+  }
+
+  const updateMeta = (symbol, meta) => {
+    setStockMeta({ ...stockMeta, [symbol]: meta })
   }
 
   return (
@@ -249,16 +315,38 @@ export default function StockPanel() {
         {inputError && <div className="text-xs text-red-500 dark:text-red-400 mt-1">{inputError}</div>}
       </div>
 
-      <div className="mt-4 space-y-3">
-        {watchlist.map((symbol) => (
-          <StockCard key={symbol} symbol={symbol} onRemove={removeStock} />
-        ))}
-        {watchlist.length === 0 && (
-          <div className="text-center text-gray-400 dark:text-gray-600 text-sm py-6">
-            還沒有追蹤的股票，在上方輸入股票代碼開始追蹤
-          </div>
-        )}
-      </div>
+      {/* Stock Table */}
+      {watchlist.length > 0 ? (
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-300/20 dark:border-white/10 text-xs text-gray-500 dark:text-gray-500">
+                <th className="py-2 px-2 text-left font-medium">股票</th>
+                <th className="py-2 px-2 text-right font-medium">現價</th>
+                <th className="py-2 px-2 text-right font-medium">漲跌</th>
+                <th className="py-2 px-2 text-right font-medium">目標價</th>
+                <th className="py-2 px-2 text-left font-medium">備註</th>
+                <th className="py-2 px-1 w-8" />
+              </tr>
+            </thead>
+            <tbody>
+              {watchlist.map((symbol) => (
+                <StockRow
+                  key={symbol}
+                  symbol={symbol}
+                  meta={stockMeta[symbol] || { targetPrice: '', note: '' }}
+                  onRemove={removeStock}
+                  onUpdateMeta={updateMeta}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="mt-4 text-center text-gray-400 dark:text-gray-600 text-sm py-6">
+          還沒有追蹤的股票，在上方輸入股票代碼開始追蹤
+        </div>
+      )}
 
       {!hasStockKey() && (
         <div className="mt-4 bg-yellow-50/80 dark:bg-yellow-900/20 border border-yellow-300/50 dark:border-yellow-700/30 rounded-lg p-3 text-sm text-yellow-700 dark:text-yellow-300 backdrop-blur-sm">
