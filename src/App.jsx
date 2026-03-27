@@ -107,7 +107,7 @@ function WidgetGrid({ layouts, onLayoutChange, onResize, locked }) {
           compactType="vertical"
         >
           {WIDGETS.map(({ key, Component }) => (
-            <div key={key} className={`widget-wrapper ${!locked ? 'widget-editing' : ''}`}>
+            <div key={key} className="widget-wrapper">
               {!locked && (
                 <>
                   <div className="widget-drag-handle" title="拖拉移動">

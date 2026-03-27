@@ -618,33 +618,7 @@
   flex-direction: column;
 }
 
-/* iOS-style wiggle animation in edit mode */
-@keyframes widgetWiggle {
-  0% { transform: rotate(0deg); }
-  25% { transform: rotate(-0.5deg); }
-  50% { transform: rotate(0.5deg); }
-  75% { transform: rotate(-0.3deg); }
-  100% { transform: rotate(0deg); }
-}
-
-.widget-editing {
-  animation: widgetWiggle 0.4s ease-in-out infinite;
-  animation-delay: calc(var(--wiggle-offset, 0) * 0.05s);
-}
-
-.widget-editing:nth-child(1) { --wiggle-offset: 0; }
-.widget-editing:nth-child(2) { --wiggle-offset: 1; }
-.widget-editing:nth-child(3) { --wiggle-offset: 2; }
-.widget-editing:nth-child(4) { --wiggle-offset: 3; }
-.widget-editing:nth-child(5) { --wiggle-offset: 4; }
-.widget-editing:nth-child(6) { --wiggle-offset: 5; }
-.widget-editing:nth-child(7) { --wiggle-offset: 6; }
-
-.widget-editing:hover {
-  animation-play-state: paused;
-}
-
-/* Editing mode overlay hint */
+/* Editing mode visual hint */
 .widget-grid-editing .react-grid-item {
   outline: 2px dashed rgba(251, 191, 36, 0.15);
   outline-offset: -2px;
@@ -670,7 +644,7 @@
   user-select: none;
 }
 
-.widget-editing .widget-drag-handle {
+.widget-grid-editing .widget-drag-handle {
   opacity: 1;
 }
 
@@ -693,7 +667,7 @@
   transition: opacity 0.2s;
 }
 
-.widget-editing .widget-size-buttons {
+.widget-grid-editing .widget-size-buttons {
   opacity: 1;
 }
 
@@ -768,7 +742,6 @@
   opacity: 0.92;
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(251, 191, 36, 0.2);
   border-radius: 16px;
-  transform: scale(1.02);
 }
 
 .react-grid-placeholder {
