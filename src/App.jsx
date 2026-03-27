@@ -11,33 +11,40 @@ import TodoPanel from './components/TodoPanel'
 import ReminderBar from './components/ReminderBar'
 import { fetchLayout, saveLayout, hasLayoutApi } from './api'
 
+// Widget size presets: S=1col, M=2col, L=4col (full width)
+const SIZE_PRESETS = {
+  S: { w: 1, h: 4 },
+  M: { w: 2, h: 5 },
+  L: { w: 4, h: 6 },
+}
+
 const DEFAULT_LAYOUTS = {
   lg: [
-    { i: 'stocks', x: 0, y: 0, w: 1, h: 5, minW: 1, minH: 3 },
-    { i: 'links', x: 1, y: 0, w: 1, h: 5, minW: 1, minH: 2 },
-    { i: 'calendar', x: 0, y: 5, w: 1, h: 5, minW: 1, minH: 3 },
-    { i: 'currency', x: 1, y: 5, w: 1, h: 5, minW: 1, minH: 3 },
+    { i: 'stocks', x: 0, y: 0, w: 2, h: 5, minW: 1, minH: 3 },
+    { i: 'links', x: 2, y: 0, w: 2, h: 5, minW: 1, minH: 2 },
+    { i: 'calendar', x: 0, y: 5, w: 2, h: 5, minW: 1, minH: 3 },
+    { i: 'currency', x: 2, y: 5, w: 2, h: 5, minW: 1, minH: 3 },
     { i: 'weather', x: 0, y: 10, w: 1, h: 4, minW: 1, minH: 3 },
     { i: 'todo', x: 1, y: 10, w: 1, h: 4, minW: 1, minH: 3 },
-    { i: 'translate', x: 0, y: 14, w: 1, h: 4, minW: 1, minH: 3 },
+    { i: 'translate', x: 2, y: 10, w: 2, h: 4, minW: 1, minH: 3 },
   ],
   md: [
-    { i: 'stocks', x: 0, y: 0, w: 1, h: 5, minW: 1, minH: 3 },
-    { i: 'links', x: 1, y: 0, w: 1, h: 5, minW: 1, minH: 2 },
-    { i: 'calendar', x: 0, y: 5, w: 1, h: 5, minW: 1, minH: 3 },
-    { i: 'currency', x: 1, y: 5, w: 1, h: 5, minW: 1, minH: 3 },
-    { i: 'weather', x: 0, y: 10, w: 1, h: 4, minW: 1, minH: 3 },
-    { i: 'todo', x: 1, y: 10, w: 1, h: 4, minW: 1, minH: 3 },
-    { i: 'translate', x: 0, y: 14, w: 1, h: 4, minW: 1, minH: 3 },
+    { i: 'stocks', x: 0, y: 0, w: 2, h: 5, minW: 1, minH: 3 },
+    { i: 'links', x: 2, y: 0, w: 2, h: 5, minW: 1, minH: 2 },
+    { i: 'calendar', x: 0, y: 5, w: 2, h: 5, minW: 1, minH: 3 },
+    { i: 'currency', x: 2, y: 5, w: 2, h: 5, minW: 1, minH: 3 },
+    { i: 'weather', x: 0, y: 10, w: 2, h: 4, minW: 1, minH: 3 },
+    { i: 'todo', x: 2, y: 10, w: 2, h: 4, minW: 1, minH: 3 },
+    { i: 'translate', x: 0, y: 14, w: 4, h: 4, minW: 1, minH: 3 },
   ],
   sm: [
-    { i: 'stocks', x: 0, y: 0, w: 1, h: 5, minW: 1, minH: 3 },
-    { i: 'links', x: 0, y: 5, w: 1, h: 4, minW: 1, minH: 2 },
-    { i: 'calendar', x: 0, y: 9, w: 1, h: 5, minW: 1, minH: 3 },
-    { i: 'currency', x: 0, y: 14, w: 1, h: 5, minW: 1, minH: 3 },
+    { i: 'stocks', x: 0, y: 0, w: 2, h: 5, minW: 1, minH: 3 },
+    { i: 'links', x: 0, y: 5, w: 2, h: 4, minW: 1, minH: 2 },
+    { i: 'calendar', x: 0, y: 9, w: 2, h: 5, minW: 1, minH: 3 },
+    { i: 'currency', x: 0, y: 14, w: 2, h: 5, minW: 1, minH: 3 },
     { i: 'weather', x: 0, y: 19, w: 1, h: 4, minW: 1, minH: 3 },
-    { i: 'todo', x: 0, y: 23, w: 1, h: 4, minW: 1, minH: 3 },
-    { i: 'translate', x: 0, y: 27, w: 1, h: 4, minW: 1, minH: 3 },
+    { i: 'todo', x: 1, y: 19, w: 1, h: 4, minW: 1, minH: 3 },
+    { i: 'translate', x: 0, y: 23, w: 2, h: 4, minW: 1, minH: 3 },
   ],
 }
 
@@ -51,7 +58,32 @@ const WIDGETS = [
   { key: 'translate', Component: TranslatePanel },
 ]
 
-function WidgetGrid({ layouts, onLayoutChange, locked }) {
+function SizeButtons({ widgetKey, layouts, onResize }) {
+  const current = layouts.lg?.find(l => l.i === widgetKey)
+  const currentW = current?.w || 2
+
+  const getActiveSize = () => {
+    if (currentW >= 4) return 'L'
+    if (currentW >= 2) return 'M'
+    return 'S'
+  }
+
+  return (
+    <div className="widget-size-buttons">
+      {['S', 'M', 'L'].map(size => (
+        <button
+          key={size}
+          onClick={(e) => { e.stopPropagation(); onResize(widgetKey, size) }}
+          className={`widget-size-btn ${getActiveSize() === size ? 'widget-size-btn-active' : ''}`}
+        >
+          {size}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function WidgetGrid({ layouts, onLayoutChange, onResize, locked }) {
   const { containerRef, width: containerWidth, mounted } = useContainerWidth()
 
   return (
@@ -59,27 +91,30 @@ function WidgetGrid({ layouts, onLayoutChange, locked }) {
       {mounted && containerWidth > 0 && (
         <ResponsiveGridLayout
           width={containerWidth}
-          className="widget-grid"
+          className={`widget-grid ${!locked ? 'widget-grid-editing' : ''}`}
           layouts={layouts}
           breakpoints={{ lg: 1024, md: 768, sm: 0 }}
-          cols={{ lg: 2, md: 2, sm: 1 }}
-          rowHeight={80}
-          margin={[16, 16]}
+          cols={{ lg: 4, md: 4, sm: 2 }}
+          rowHeight={72}
+          margin={[14, 14]}
           containerPadding={[0, 0]}
           onLayoutChange={onLayoutChange}
           draggableHandle=".widget-drag-handle"
-          resizeHandles={locked ? [] : ['se', 'e', 's']}
+          resizeHandles={locked ? [] : ['se']}
           isDraggable={!locked}
           isResizable={!locked}
           useCSSTransforms={true}
           compactType="vertical"
         >
           {WIDGETS.map(({ key, Component }) => (
-            <div key={key} className="widget-wrapper">
+            <div key={key} className={`widget-wrapper ${!locked ? 'widget-editing' : ''}`}>
               {!locked && (
-                <div className="widget-drag-handle" title="拖拉移動">
-                  <span>⠿</span>
-                </div>
+                <>
+                  <div className="widget-drag-handle" title="拖拉移動">
+                    <span>⠿</span>
+                  </div>
+                  <SizeButtons widgetKey={key} layouts={layouts} onResize={onResize} />
+                </>
               )}
               <div className="widget-content">
                 <Component />
@@ -100,10 +135,17 @@ function App() {
   })
   const [layouts, setLayouts] = useState(() => {
     try {
+      // Layout version: bump this when grid system changes (e.g. 2-col → 4-col)
+      const LAYOUT_VERSION = 2
+      const savedVersion = parseInt(localStorage.getItem('layout_version') || '0')
+      if (savedVersion < LAYOUT_VERSION) {
+        localStorage.setItem('layout_version', String(LAYOUT_VERSION))
+        localStorage.removeItem('widget_layouts')
+        return DEFAULT_LAYOUTS
+      }
       const saved = localStorage.getItem('widget_layouts')
       if (saved) {
         const parsed = JSON.parse(saved)
-        // Check if all widgets exist in saved layout
         const widgetKeys = WIDGETS.map(w => w.key)
         const savedKeys = parsed.lg?.map(l => l.i) || []
         const allPresent = widgetKeys.every(k => savedKeys.includes(k))
@@ -118,15 +160,26 @@ function App() {
   })
   const saveTimerRef = useRef(null)
 
-  // Load layout from D1
+  // Load layout from D1 (skip if layout version just bumped)
   useEffect(() => {
     async function load() {
       if (hasLayoutApi()) {
         try {
           const saved = await fetchLayout()
           if (saved) {
-            setLayouts(saved)
-            localStorage.setItem('widget_layouts', JSON.stringify(saved))
+            // Validate: check if saved layout uses the current column count
+            const maxW = Math.max(...(saved.lg || []).map(l => l.x + l.w))
+            if (maxW > 2) {
+              // Layout is compatible with 4-col grid
+              const widgetKeys = WIDGETS.map(w => w.key)
+              const savedKeys = saved.lg?.map(l => l.i) || []
+              const allPresent = widgetKeys.every(k => savedKeys.includes(k))
+              if (allPresent) {
+                setLayouts(saved)
+                localStorage.setItem('widget_layouts', JSON.stringify(saved))
+              }
+            }
+            // else: D1 has old 2-col layout, ignore it and push new defaults
           }
         } catch (e) {
           console.warn('D1 layout fetch failed', e)
@@ -156,6 +209,31 @@ function App() {
         saveLayout(allLayouts).catch(e => console.warn('D1 layout save failed', e))
       }
     }, 1000)
+  }, [])
+
+  const onWidgetResize = useCallback((widgetKey, size) => {
+    const preset = SIZE_PRESETS[size]
+    if (!preset) return
+    setLayouts(prev => {
+      const next = {}
+      for (const bp of Object.keys(prev)) {
+        next[bp] = prev[bp].map(item => {
+          if (item.i !== widgetKey) return item
+          const cols = bp === 'sm' ? 2 : 4
+          const w = Math.min(preset.w, cols)
+          const x = item.x + w > cols ? 0 : item.x
+          return { ...item, w, h: preset.h, x }
+        })
+      }
+      localStorage.setItem('widget_layouts', JSON.stringify(next))
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = setTimeout(() => {
+        if (hasLayoutApi()) {
+          saveLayout(next).catch(e => console.warn('D1 layout save failed', e))
+        }
+      }, 1000)
+      return next
+    })
   }, [])
 
   const resetLayout = useCallback(() => {
@@ -260,7 +338,7 @@ function App() {
 
       <main className="relative z-10 p-3 sm:p-4 md:p-6">
         {layoutReady && (
-          <WidgetGrid layouts={layouts} onLayoutChange={onLayoutChange} locked={locked} />
+          <WidgetGrid layouts={layouts} onLayoutChange={onLayoutChange} onResize={onWidgetResize} locked={locked} />
         )}
       </main>
     </div>
