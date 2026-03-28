@@ -11,6 +11,7 @@ import WaterPanel from './components/WaterPanel'
 import PomodoroPanel from './components/PomodoroPanel'
 import ReminderBar from './components/ReminderBar'
 import HeaderWeather from './components/HeaderWeather'
+import WidgetSettings, { loadWidgetConfig, saveWidgetConfig, DEFAULT_WIDGET_CONFIG } from './components/WidgetSettings'
 import { fetchLayout, saveLayout, hasLayoutApi } from './api'
 
 // Widget size presets: S=1col, M=2col, L=4col (full width)
@@ -89,8 +90,16 @@ function SizeButtons({ widgetKey, layouts, onResize }) {
   )
 }
 
-function WidgetGrid({ layouts, onLayoutChange, onResize, locked }) {
+function WidgetGrid({ layouts, onLayoutChange, onResize, locked, widgetConfig }) {
   const { containerRef, width: containerWidth, mounted } = useContainerWidth()
+  const visibleWidgets = WIDGETS.filter(w => widgetConfig[w.key]?.visible !== false)
+
+  // Filter layouts to only include visible widgets
+  const filteredLayouts = {}
+  const visibleKeys = new Set(visibleWidgets.map(w => w.key))
+  for (const [bp, items] of Object.entries(layouts)) {
+    filteredLayouts[bp] = items.filter(item => visibleKeys.has(item.i))
+  }
 
   return (
     <div ref={containerRef}>
@@ -98,7 +107,7 @@ function WidgetGrid({ layouts, onLayoutChange, onResize, locked }) {
         <ResponsiveGridLayout
           width={containerWidth}
           className={`widget-grid ${!locked ? 'widget-grid-editing' : ''}`}
-          layouts={layouts}
+          layouts={filteredLayouts}
           breakpoints={{ lg: 1024, md: 768, sm: 0 }}
           cols={{ lg: 4, md: 4, sm: 2 }}
           rowHeight={72}
@@ -112,21 +121,26 @@ function WidgetGrid({ layouts, onLayoutChange, onResize, locked }) {
           useCSSTransforms={true}
           compactType="vertical"
         >
-          {WIDGETS.map(({ key, Component }) => (
-            <div key={key} className="widget-wrapper">
-              {!locked && (
-                <>
-                  <div className="widget-drag-handle" title="拖拉移動">
-                    <span>⠿</span>
-                  </div>
-                  <SizeButtons widgetKey={key} layouts={layouts} onResize={onResize} />
-                </>
-              )}
-              <div className="widget-content">
-                <Component />
+          {visibleWidgets.map(({ key, Component }) => {
+            const cfg = widgetConfig[key] || {}
+            const def = DEFAULT_WIDGET_CONFIG[key] || {}
+            const customTitle = cfg.title !== def.title ? cfg.title : undefined
+            return (
+              <div key={key} className="widget-wrapper">
+                {!locked && (
+                  <>
+                    <div className="widget-drag-handle" title="拖拉移動">
+                      <span>⠿</span>
+                    </div>
+                    <SizeButtons widgetKey={key} layouts={layouts} onResize={onResize} />
+                  </>
+                )}
+                <div className="widget-content">
+                  <Component customTitle={customTitle} />
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </ResponsiveGridLayout>
       )}
     </div>
@@ -164,6 +178,8 @@ function App() {
   const [locked, setLocked] = useState(() => {
     return localStorage.getItem('layout_locked') === 'true'
   })
+  const [widgetConfig, setWidgetConfig] = useState(loadWidgetConfig)
+  const [showSettings, setShowSettings] = useState(false)
   const saveTimerRef = useRef(null)
   const initializedRef = useRef(false)
 
@@ -327,13 +343,22 @@ function App() {
             {locked ? '\uD83D\uDD12' : '\uD83D\uDD13'}
           </button>
           {!locked && (
-            <button
-              onClick={resetLayout}
-              className="text-xs text-gray-500 hover:text-amber-500 transition-colors hidden sm:block"
-              title="重置佈局"
-            >
-              &#8634;
-            </button>
+            <>
+              <button
+                onClick={resetLayout}
+                className="text-xs text-gray-500 hover:text-amber-500 transition-colors hidden sm:block"
+                title="重置佈局"
+              >
+                &#8634;
+              </button>
+              <button
+                onClick={() => setShowSettings(true)}
+                className="text-sm text-gray-500 hover:text-amber-500 transition-colors hidden sm:block"
+                title="Widget 管理"
+              >
+                &#9881;
+              </button>
+            </>
           )}
           <button
             onClick={() => setDark(!dark)}
@@ -358,9 +383,17 @@ function App() {
 
       <main className="relative z-10 p-3 sm:p-4 md:p-6">
         {layoutReady && (
-          <WidgetGrid layouts={layouts} onLayoutChange={onLayoutChange} onResize={onWidgetResize} locked={locked} />
+          <WidgetGrid layouts={layouts} onLayoutChange={onLayoutChange} onResize={onWidgetResize} locked={locked} widgetConfig={widgetConfig} />
         )}
       </main>
+
+      {showSettings && (
+        <WidgetSettings
+          config={widgetConfig}
+          onChange={setWidgetConfig}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
     </div>
   )
 }
