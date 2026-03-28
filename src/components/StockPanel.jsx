@@ -268,7 +268,7 @@ function TaiexCard() {
   )
 }
 
-export default function StockPanel() {
+export default function StockPanel({ customTitle }) {
   const [watchlist, setWatchlist] = useState([])
   const [stockMeta, setStockMeta] = useState({})
   const [input, setInput] = useState('')
@@ -388,7 +388,7 @@ export default function StockPanel() {
     <section className="glass-card card-stripe card-stripe-emerald rounded-xl p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-          <span className="text-emerald-500 dark:text-emerald-400 text-xl glow-emerald">$</span> Taiwan Stocks
+          <span className="text-emerald-500 dark:text-emerald-400 text-xl glow-emerald">$</span> {customTitle || 'Taiwan Stocks'}
         </h2>
         <span className="text-xs text-gray-500 dark:text-gray-500 flex items-center gap-1.5">
           <span className="live-dot" />

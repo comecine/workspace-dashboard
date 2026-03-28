@@ -6,7 +6,7 @@ const DEFAULT_LINKS = [
   { id: '2', name: 'GitHub', url: 'https://github.com', icon: 'GH', desc: '程式碼管理' },
 ]
 
-export default function LinksPanel() {
+export default function LinksPanel({ customTitle }) {
   const [links, setLinks] = useState([])
   const [editing, setEditing] = useState(null)
   const [showAdd, setShowAdd] = useState(false)
@@ -155,7 +155,7 @@ export default function LinksPanel() {
     <section className="glass-card card-stripe card-stripe-orange rounded-xl p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-          <span className="text-orange-400 text-xl glow-orange">@</span> Quick Links
+          <span className="text-orange-400 text-xl glow-orange">@</span> {customTitle || 'Quick Links'}
         </h2>
         <button
           onClick={() => { resetForm(); setShowAdd(!showAdd) }}

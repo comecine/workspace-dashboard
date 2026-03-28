@@ -13,7 +13,7 @@ function saveLocal(todos) {
   localStorage.setItem(LOCAL_KEY, JSON.stringify(todos))
 }
 
-export default function TodoPanel() {
+export default function TodoPanel({ customTitle }) {
   const [todos, setTodos] = useState(loadLocal)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(true)
@@ -88,7 +88,7 @@ export default function TodoPanel() {
     <section className="glass-card card-stripe card-stripe-rose rounded-xl p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-          <span className="text-rose-500 dark:text-rose-400 text-xl">✅</span> To-Do
+          <span className="text-rose-500 dark:text-rose-400 text-xl">✅</span> {customTitle || 'To-Do'}
         </h2>
         {todos.length > 0 && (
           <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">

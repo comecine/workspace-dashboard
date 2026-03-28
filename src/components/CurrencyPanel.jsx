@@ -7,7 +7,7 @@ const PAIRS = [
 ]
 
 
-export default function CurrencyPanel() {
+export default function CurrencyPanel({ customTitle }) {
   const [rates, setRates] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -83,7 +83,7 @@ export default function CurrencyPanel() {
     <section className="glass-card card-stripe card-stripe-blue rounded-xl p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-          <span className="text-blue-500 dark:text-blue-400 text-xl glow-blue">$</span> Exchange Rates
+          <span className="text-blue-500 dark:text-blue-400 text-xl glow-blue">$</span> {customTitle || 'Exchange Rates'}
         </h2>
         {lastUpdate && (
           <span className="text-xs text-gray-500 dark:text-gray-500 flex items-center gap-1.5">

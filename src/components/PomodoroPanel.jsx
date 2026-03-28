@@ -6,7 +6,7 @@ const MODES = [
   { key: 'long', label: '長休息', duration: 15 * 60, color: 'blue' },
 ]
 
-export default function PomodoroPanel() {
+export default function PomodoroPanel({ customTitle }) {
   const [modeIdx, setModeIdx] = useState(0)
   const [timeLeft, setTimeLeft] = useState(MODES[0].duration)
   const [running, setRunning] = useState(false)
@@ -94,7 +94,7 @@ export default function PomodoroPanel() {
     <section className="glass-card card-stripe card-stripe-red rounded-xl p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-          <span className="text-red-500 dark:text-red-400 text-xl">🍅</span> Pomodoro
+          <span className="text-red-500 dark:text-red-400 text-xl">🍅</span> {customTitle || 'Pomodoro'}
         </h2>
         <span className="text-xs text-gray-500 dark:text-gray-500">
           今日 {sessions} 回合
