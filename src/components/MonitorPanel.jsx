@@ -27,7 +27,7 @@ function timeAgo(dateStr) {
 
 function StatusDot({ ok }) {
   return (
-    <span className={`inline-block w-2 h-2 rounded-full ${ok ? 'bg-emerald-400' : 'bg-red-400'}`} />
+    <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${ok ? 'bg-emerald-400' : 'bg-red-400'}`} />
   )
 }
 
@@ -47,11 +47,28 @@ function MiniCard({ icon, title, value, sub, ok = true }) {
   )
 }
 
+function UsageBar({ used, total, label, unit = '' }) {
+  const pct = total > 0 ? (used / total) * 100 : 0
+  const color = pct > 80 ? 'bg-red-500' : pct > 50 ? 'bg-amber-500' : 'bg-emerald-500'
+  return (
+    <div className="mt-2">
+      <div className="flex justify-between text-[10px] text-gray-500 mb-0.5">
+        <span>{label}</span>
+        <span>{unit ? `${formatNum(used)}${unit} / ${formatNum(total)}${unit}` : `${formatNum(used)} / ${formatNum(total)}`}</span>
+      </div>
+      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${Math.min(100, Math.max(0.5, pct))}%` }} />
+      </div>
+    </div>
+  )
+}
+
 function FullMonitor({ data, onClose }) {
   if (!data) return null
   const totalReqs = data.workers.reduce((sum, w) => sum + (w.stats?.requests || 0), 0)
   const totalErrors = data.workers.reduce((sum, w) => sum + (w.stats?.errors || 0), 0)
   const totalD1Size = data.d1.reduce((sum, d) => sum + (d.fileSize || 0), 0)
+  const api = data.apiQuotas || {}
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={onClose}>
@@ -62,13 +79,13 @@ function FullMonitor({ data, onClose }) {
       >
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-bold flex items-center gap-2">
-            <span className="text-orange-400">🔥</span> Cloudflare 監控牆
+            <span className="text-orange-400">🔥</span> 監控牆
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-200 text-xl">&times;</button>
         </div>
 
         {/* Summary bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
           <div className="glass-inner rounded-xl p-3 text-center">
             <div className="text-2xl font-bold text-amber-400">{data.workers.length}</div>
             <div className="text-xs text-gray-400">Workers</div>
@@ -84,6 +101,10 @@ function FullMonitor({ data, onClose }) {
           <div className="glass-inner rounded-xl p-3 text-center">
             <div className="text-2xl font-bold text-rose-400">{formatNum(totalReqs)}</div>
             <div className="text-xs text-gray-400">24h Requests</div>
+          </div>
+          <div className="glass-inner rounded-xl p-3 text-center">
+            <div className="text-2xl font-bold text-cyan-400">{data.crons?.length || 0}</div>
+            <div className="text-xs text-gray-400">Cron Jobs</div>
           </div>
         </div>
 
@@ -101,31 +122,42 @@ function FullMonitor({ data, onClose }) {
                   </div>
                   <span className="text-xs text-gray-500">updated {timeAgo(w.modified)}</span>
                 </div>
-                <div className="flex gap-4 mt-1.5 text-xs text-gray-400">
+                <div className="flex gap-4 mt-1.5 text-xs text-gray-400 flex-wrap">
                   <span>Requests: <span className="text-white font-medium">{formatNum(w.stats.requests)}</span></span>
                   <span>Errors: <span className={`font-medium ${w.stats.errors > 0 ? 'text-red-400' : 'text-emerald-400'}`}>{w.stats.errors}</span></span>
                   <span>Error Rate: <span className={`font-medium ${Number(errorRate) > 1 ? 'text-red-400' : 'text-emerald-400'}`}>{errorRate}%</span></span>
                   <span>Subreqs: <span className="text-white font-medium">{formatNum(w.stats.subrequests)}</span></span>
                 </div>
-                {/* Usage bar */}
-                <div className="mt-2">
-                  <div className="flex justify-between text-[10px] text-gray-500 mb-0.5">
-                    <span>Daily usage</span>
-                    <span>{formatNum(w.stats.requests)} / 100K</span>
-                  </div>
-                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${
-                        w.stats.requests / 100000 > 0.8 ? 'bg-red-500' : w.stats.requests / 100000 > 0.5 ? 'bg-amber-500' : 'bg-emerald-500'
-                      }`}
-                      style={{ width: `${Math.min(100, (w.stats.requests / 100000) * 100)}%` }}
-                    />
-                  </div>
-                </div>
+                <UsageBar used={w.stats.requests} total={100000} label="Daily usage" />
               </div>
             )
           })}
         </div>
+
+        {/* Cron Jobs */}
+        {data.crons && data.crons.length > 0 && (
+          <>
+            <h3 className="text-sm font-bold text-cyan-400 mb-2 flex items-center gap-1.5">⏰ Cron Triggers</h3>
+            <div className="space-y-2 mb-5">
+              {data.crons.map(c => (
+                <div key={c.name} className="glass-inner rounded-xl p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <StatusDot ok />
+                      <span className="font-medium text-sm">{c.name}</span>
+                    </div>
+                    <span className="text-xs text-gray-500">updated {timeAgo(c.modified)}</span>
+                  </div>
+                  <div className="mt-1 text-xs text-gray-400">
+                    {c.schedules.map((s, i) => (
+                      <span key={i} className="inline-block bg-white/5 rounded px-2 py-0.5 mr-1.5 mt-1 font-mono text-cyan-300">{s}</span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Pages */}
         <h3 className="text-sm font-bold text-blue-400 mb-2 flex items-center gap-1.5">📄 Pages</h3>
@@ -139,7 +171,7 @@ function FullMonitor({ data, onClose }) {
                 </div>
                 <span className="text-xs text-gray-500">{timeAgo(p.latestDeploy)}</span>
               </div>
-              <div className="flex gap-3 mt-1 text-xs text-gray-400">
+              <div className="flex gap-3 mt-1 text-xs text-gray-400 flex-wrap">
                 <span>{p.subdomain}</span>
                 {p.domains.length > 0 && <span className="text-blue-400">{p.domains.join(', ')}</span>}
                 <span className={`${p.latestStatus === 'success' ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -162,19 +194,7 @@ function FullMonitor({ data, onClose }) {
                 </div>
                 <span className="text-xs text-gray-500">{formatBytes(d.fileSize)}</span>
               </div>
-              {/* Storage bar */}
-              <div className="mt-2">
-                <div className="flex justify-between text-[10px] text-gray-500 mb-0.5">
-                  <span>Storage</span>
-                  <span>{formatBytes(d.fileSize)} / 5 GB</span>
-                </div>
-                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-emerald-500 transition-all"
-                    style={{ width: `${Math.max(0.5, (d.fileSize / (5 * 1024 * 1024 * 1024)) * 100)}%` }}
-                  />
-                </div>
-              </div>
+              <UsageBar used={d.fileSize} total={5 * 1024 * 1024 * 1024} label="Storage" />
             </div>
           ))}
           <div className="text-[10px] text-gray-500 px-1">
@@ -182,20 +202,91 @@ function FullMonitor({ data, onClose }) {
           </div>
         </div>
 
-        {/* Free tier limits */}
-        <h3 className="text-sm font-bold text-violet-400 mb-2 flex items-center gap-1.5">📊 Free Tier Limits</h3>
+        {/* API Quotas */}
+        <h3 className="text-sm font-bold text-pink-400 mb-2 flex items-center gap-1.5">🔌 API Quotas</h3>
+        <div className="space-y-2 mb-5">
+          {/* Infobip */}
+          {api.infobip && (
+            <div className="glass-inner rounded-xl p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <StatusDot ok={api.infobip.balance > 0} />
+                  <span className="font-medium text-sm">Infobip SMS</span>
+                </div>
+                <span className={`text-sm font-bold ${api.infobip.balance > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {api.infobip.currency} {api.infobip.balance?.toLocaleString('zh-TW', { maximumFractionDigits: 0 })}
+                </span>
+              </div>
+              <div className="text-[10px] text-gray-500 mt-1">Partner 帳戶餘額</div>
+            </div>
+          )}
+
+          {/* Leonardo */}
+          {api.leonardo && (
+            <div className="glass-inner rounded-xl p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <StatusDot ok={(api.leonardo.apiPaidTokens + api.leonardo.subscriptionTokens) > 0} />
+                  <span className="font-medium text-sm">Leonardo.ai</span>
+                </div>
+              </div>
+              <div className="flex gap-4 mt-1.5 text-xs text-gray-400">
+                <span>Subscription: <span className="text-white font-medium">{api.leonardo.subscriptionTokens}</span> tokens</span>
+                <span>API Paid: <span className="text-white font-medium">{api.leonardo.apiPaidTokens}</span> tokens</span>
+                <span>Paid: <span className="text-white font-medium">{api.leonardo.paidTokens}</span></span>
+              </div>
+            </div>
+          )}
+
+          {/* Fugle */}
+          {api.fugle && (
+            <div className="glass-inner rounded-xl p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <StatusDot ok={api.fugle.status === 200} />
+                  <span className="font-medium text-sm">Fugle 台股 API</span>
+                </div>
+              </div>
+              <div className="flex gap-4 mt-1.5 text-xs text-gray-400">
+                {api.fugle.remaining != null && (
+                  <span>Remaining: <span className="text-white font-medium">{api.fugle.remaining}</span> / {api.fugle.limit}</span>
+                )}
+                {api.fugle.status !== 200 && (
+                  <span className="text-red-400">Status: {api.fugle.status}</span>
+                )}
+                {api.fugle.remaining == null && api.fugle.status === 200 && (
+                  <span className="text-emerald-400">API 正常</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ExchangeRate */}
+          {api.exchangeRate && (
+            <div className="glass-inner rounded-xl p-3">
+              <div className="flex items-center gap-2">
+                <StatusDot ok />
+                <span className="font-medium text-sm">ExchangeRate API</span>
+                <span className="text-[10px] text-gray-500 ml-auto">{api.exchangeRate.note}</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Free tier limits summary */}
+        <h3 className="text-sm font-bold text-violet-400 mb-2 flex items-center gap-1.5">📊 Free Tier 總覽</h3>
         <div className="glass-inner rounded-xl p-3 space-y-1.5 text-xs text-gray-400">
           <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${totalReqs / 100000 > 0.8 ? 'bg-red-400' : 'bg-emerald-400'}`} />
-            Workers: {formatNum(totalReqs)} / 100K requests/day ({(totalReqs / 100000 * 100).toFixed(1)}%)
+            <StatusDot ok={totalReqs / 100000 <= 0.8} />
+            Workers: {formatNum(totalReqs)} / 100K req/day ({(totalReqs / 100000 * 100).toFixed(1)}%)
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <StatusDot ok />
             D1 Storage: {formatBytes(totalD1Size)} / 5 GB
           </div>
           <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${totalErrors > 0 ? 'bg-amber-400' : 'bg-emerald-400'}`} />
-            24h Errors: {totalErrors} {totalErrors > 0 ? '⚠️' : '✓'}
+            <StatusDot ok={totalErrors === 0} />
+            24h Errors: {totalErrors} {totalErrors > 0 ? '' : ''}
           </div>
         </div>
 
@@ -233,13 +324,14 @@ export default function MonitorPanel({ customTitle }) {
 
   useEffect(() => {
     fetchData()
-    const timer = setInterval(fetchData, 5 * 60 * 1000) // refresh every 5 min
+    const timer = setInterval(fetchData, 5 * 60 * 1000)
     return () => clearInterval(timer)
   }, [fetchData])
 
   const totalReqs = data?.workers?.reduce((s, w) => s + (w.stats?.requests || 0), 0) || 0
   const totalErrors = data?.workers?.reduce((s, w) => s + (w.stats?.errors || 0), 0) || 0
   const allOk = totalErrors === 0
+  const apiCount = data?.apiQuotas ? Object.values(data.apiQuotas).filter(Boolean).length : 0
 
   return (
     <>
@@ -289,10 +381,10 @@ export default function MonitorPanel({ customTitle }) {
               sub={formatBytes(data.d1.reduce((s, d) => s + (d.fileSize || 0), 0))}
             />
             <MiniCard
-              icon={allOk ? '✅' : '⚠️'}
-              title="Status"
-              value={allOk ? 'All Good' : `${totalErrors} errors`}
-              sub={`${(totalReqs / 100000 * 100).toFixed(1)}% quota used`}
+              icon="🔌"
+              title="APIs"
+              value={`${apiCount} connected`}
+              sub={data.apiQuotas?.infobip ? `SMS: ${data.apiQuotas.infobip.currency} ${Math.round(data.apiQuotas.infobip.balance)}` : 'checking...'}
               ok={allOk}
             />
           </div>

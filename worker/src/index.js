@@ -250,7 +250,7 @@ export default {
         }
       }
 
-      // ===== Monitor: Cloudflare Resources =====
+      // ===== Monitor: Cloudflare Resources + API Quotas =====
       if (path === '/api/monitor' && method === 'GET') {
         const CF_TOKEN = env.CF_API_TOKEN;
         const ACCT = '01a543f1afca24d791ba7b5d1f0014c2';
@@ -258,11 +258,12 @@ export default {
           return Response.json({ error: 'CF_API_TOKEN not set' }, { status: 500, headers: corsHeaders });
         }
         const cfHeaders = { 'Authorization': `Bearer ${CF_TOKEN}`, 'Content-Type': 'application/json' };
-        const cfApi = (ep) => fetch(`https://api.cloudflare.com/client/v4/accounts/${ACCT}${ep}`, { headers: cfHeaders }).then(r => r.json());
+        const cfApi = (acct, ep) => fetch(`https://api.cloudflare.com/client/v4/accounts/${acct}${ep}`, { headers: cfHeaders }).then(r => r.json()).catch(() => ({ result: [] }));
 
-        // GraphQL for Workers analytics (last 24h)
         const now = new Date();
         const yesterday = new Date(now - 86400000);
+
+        // GraphQL: Workers analytics + Cron triggers (last 24h)
         const gqlBody = JSON.stringify({
           query: `query {
             viewer {
@@ -270,10 +271,6 @@ export default {
                 workersInvocationsAdaptive(limit: 50, filter: {datetime_geq: "${yesterday.toISOString()}", datetime_leq: "${now.toISOString()}"}) {
                   sum { requests errors subrequests }
                   dimensions { scriptName status }
-                }
-                d1AnalyticsAdaptive: workersInvocationsAdaptive(limit: 10, filter: {datetime_geq: "${yesterday.toISOString()}", datetime_leq: "${now.toISOString()}"}) {
-                  sum { requests }
-                  dimensions { scriptName }
                 }
               }
             }
@@ -283,12 +280,55 @@ export default {
           method: 'POST', headers: cfHeaders, body: gqlBody
         }).then(r => r.json()).catch(() => null);
 
-        // Parallel fetches
-        const [workers, pages, d1s, gqlData] = await Promise.all([
-          cfApi('/workers/scripts'),
-          cfApi('/pages/projects'),
-          cfApi('/d1/database'),
+        // --- Infobip balance ---
+        const infobipFetch = (env.INFOBIP_BASE_URL && env.INFOBIP_API_KEY)
+          ? fetch(`https://${env.INFOBIP_BASE_URL}/account/1/balance`, {
+              headers: { 'Authorization': `App ${env.INFOBIP_API_KEY}`, 'Accept': 'application/json' }
+            }).then(r => r.json()).catch(() => null)
+          : Promise.resolve(null);
+
+        // --- Leonardo.ai credits ---
+        const leonardoFetch = env.LEONARDO_API_KEY
+          ? fetch('https://cloud.leonardo.ai/api/rest/v1/me', {
+              headers: { 'Authorization': `Bearer ${env.LEONARDO_API_KEY}`, 'Accept': 'application/json' }
+            }).then(r => r.json()).catch(() => null)
+          : Promise.resolve(null);
+
+        // --- Fugle rate limit (quick test call) ---
+        const fugleFetch = env.FUGLE_API_KEY
+          ? fetch('https://api.fugle.tw/marketdata/v1.0/stock/intraday/quote/2330', {
+              headers: { 'X-API-KEY': env.FUGLE_API_KEY }
+            }).then(r => ({
+              remaining: r.headers.get('X-RateLimit-Remaining'),
+              limit: r.headers.get('X-RateLimit-Limit'),
+              reset: r.headers.get('X-RateLimit-Reset'),
+              status: r.status,
+            })).catch(() => null)
+          : Promise.resolve(null);
+
+        // --- Cron triggers list ---
+        const cronFetch = cfApi(ACCT, '/workers/scripts').then(async (scripts) => {
+          const results = [];
+          for (const s of (scripts.result || [])) {
+            const schedRes = await fetch(`https://api.cloudflare.com/client/v4/accounts/${ACCT}/workers/scripts/${s.id}/schedules`, { headers: cfHeaders }).then(r => r.json()).catch(() => null);
+            const scheds = schedRes?.result?.schedules || [];
+            if (scheds.length > 0) {
+              results.push({ name: s.id, schedules: scheds.map(sc => sc.cron), modified: s.modified_on });
+            }
+          }
+          return results;
+        }).catch(() => []);
+
+        // Parallel fetches: CF resources + API quotas
+        const [workers, pages, d1s, gqlData, infobip, leonardo, fugle, crons] = await Promise.all([
+          cfApi(ACCT, '/workers/scripts'),
+          cfApi(ACCT, '/pages/projects'),
+          cfApi(ACCT, '/d1/database'),
           gqlFetch,
+          infobipFetch,
+          leonardoFetch,
+          fugleFetch,
+          cronFetch,
         ]);
 
         // Parse GraphQL analytics
@@ -303,6 +343,13 @@ export default {
             workerStats[name].subrequests += entry.sum.subrequests;
           }
         }
+
+        // Parse Leonardo credits
+        const leonardoCredits = leonardo?.user_details?.[0] ? {
+          paidTokens: leonardo.user_details[0].paidTokens || 0,
+          subscriptionTokens: leonardo.user_details[0].subscriptionTokens || 0,
+          apiPaidTokens: leonardo.user_details[0].apiPaidTokens || 0,
+        } : null;
 
         // Build response
         const result = {
@@ -324,6 +371,13 @@ export default {
             fileSize: d.file_size,
             numTables: d.num_tables,
           })),
+          crons: crons || [],
+          apiQuotas: {
+            infobip: infobip ? { balance: infobip.balance, currency: infobip.currency } : null,
+            leonardo: leonardoCredits,
+            fugle: fugle,
+            exchangeRate: { plan: 'free', monthlyLimit: 1500, note: 'No quota API — 1,500 req/month free tier' },
+          },
           limits: {
             workers: { daily: 100000, label: 'Workers Free: 100K req/day' },
             d1: { reads: 5000000, writes: 100000, storage: 5 * 1024 * 1024 * 1024, label: 'D1 Free: 5M reads, 100K writes/day, 5GB' },
