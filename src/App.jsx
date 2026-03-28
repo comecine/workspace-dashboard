@@ -12,6 +12,7 @@ import PomodoroPanel from './components/PomodoroPanel'
 import ReminderBar from './components/ReminderBar'
 import HeaderWeather from './components/HeaderWeather'
 import WidgetSettings, { loadWidgetConfig, saveWidgetConfig, DEFAULT_WIDGET_CONFIG } from './components/WidgetSettings'
+import DraggableHeaderItems, { loadHeaderOrder } from './components/DraggableHeaderItems'
 import { fetchLayout, saveLayout, hasLayoutApi, hasWidgetConfigApi, fetchWidgetConfig } from './api'
 
 // Widget size presets: S=1col, M=2col, L=4col (full width)
@@ -180,6 +181,7 @@ function App() {
   })
   const [widgetConfig, setWidgetConfig] = useState(loadWidgetConfig)
   const [showSettings, setShowSettings] = useState(false)
+  const [headerOrder, setHeaderOrder] = useState(loadHeaderOrder)
   const saveTimerRef = useRef(null)
   const initializedRef = useRef(false)
 
@@ -336,22 +338,24 @@ function App() {
         <h1 className="text-lg sm:text-xl font-bold tracking-tight gradient-text">
           Workspace Dashboard
         </h1>
-        <div className="hidden sm:block">
-          <HeaderWeather />
-        </div>
+        <DraggableHeaderItems order={headerOrder} onReorder={setHeaderOrder} locked={locked}>
+          {{
+            weather: <HeaderWeather />,
+            reminder: <ReminderBar />,
+            datetime: (
+              <time className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-mono flex items-center gap-0.5">
+                <span>{dateStr}</span>
+                <span className="mx-1.5 text-gray-300 dark:text-gray-600">|</span>
+                <span>{hours}</span>
+                <span className="clock-separator">:</span>
+                <span>{minutes}</span>
+                <span className="clock-separator">:</span>
+                <span>{seconds}</span>
+              </time>
+            ),
+          }}
+        </DraggableHeaderItems>
         <div className="flex items-center gap-3 sm:gap-4">
-          <div className="hidden sm:block">
-            <ReminderBar />
-          </div>
-          <time className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-mono hidden sm:flex items-center gap-0.5">
-            <span>{dateStr}</span>
-            <span className="mx-1.5 text-gray-300 dark:text-gray-600">|</span>
-            <span>{hours}</span>
-            <span className="clock-separator">:</span>
-            <span>{minutes}</span>
-            <span className="clock-separator">:</span>
-            <span>{seconds}</span>
-          </time>
           <button
             onClick={toggleLock}
             className={`text-sm transition-colors hidden sm:block ${locked ? 'text-amber-500' : 'text-gray-500 hover:text-amber-500'}`}
