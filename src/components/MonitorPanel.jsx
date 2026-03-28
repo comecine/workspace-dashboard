@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-
-const WORKER_URL = import.meta.env.VITE_WORKER_URL || ''
+import { hasMonitorApi, fetchMonitorData } from '../api'
 
 function formatBytes(bytes) {
   if (!bytes) return '0 B'
@@ -215,13 +214,16 @@ export default function MonitorPanel({ customTitle }) {
   const [showFull, setShowFull] = useState(false)
 
   const fetchData = useCallback(async () => {
+    if (!hasMonitorApi()) {
+      setError('Worker not configured')
+      setLoading(false)
+      return
+    }
     try {
       setLoading(true)
-      const res = await fetch(`${WORKER_URL}/api/monitor`)
-      if (!res.ok) throw new Error(`${res.status}`)
-      const json = await res.json()
-      if (json.success) setData(json)
-      else throw new Error(json.error || 'Unknown error')
+      const result = await fetchMonitorData()
+      if (result) setData(result)
+      else throw new Error('No data')
     } catch (e) {
       setError(e.message)
     } finally {
