@@ -9,6 +9,7 @@ import CalendarPanel from './components/CalendarPanel'
 import TodoPanel from './components/TodoPanel'
 import WaterPanel from './components/WaterPanel'
 import PomodoroPanel from './components/PomodoroPanel'
+import MonitorPanel from './components/MonitorPanel'
 import ReminderBar from './components/ReminderBar'
 import HeaderWeather from './components/HeaderWeather'
 import WidgetSettings, { loadWidgetConfig, saveWidgetConfig, DEFAULT_WIDGET_CONFIG } from './components/WidgetSettings'
@@ -32,6 +33,7 @@ const DEFAULT_LAYOUTS = {
     { i: 'todo', x: 1, y: 10, w: 1, h: 5, minW: 1, minH: 3 },
     { i: 'water', x: 2, y: 10, w: 1, h: 5, minW: 1, minH: 3 },
     { i: 'translate', x: 3, y: 10, w: 1, h: 5, minW: 1, minH: 3 },
+    { i: 'monitor', x: 0, y: 15, w: 2, h: 5, minW: 1, minH: 3 },
   ],
   md: [
     { i: 'stocks', x: 0, y: 0, w: 2, h: 5, minW: 1, minH: 3 },
@@ -42,6 +44,7 @@ const DEFAULT_LAYOUTS = {
     { i: 'todo', x: 1, y: 10, w: 1, h: 5, minW: 1, minH: 3 },
     { i: 'water', x: 2, y: 10, w: 1, h: 5, minW: 1, minH: 3 },
     { i: 'translate', x: 3, y: 10, w: 1, h: 5, minW: 1, minH: 3 },
+    { i: 'monitor', x: 0, y: 15, w: 2, h: 5, minW: 1, minH: 3 },
   ],
   sm: [
     { i: 'stocks', x: 0, y: 0, w: 2, h: 5, minW: 1, minH: 3 },
@@ -52,6 +55,7 @@ const DEFAULT_LAYOUTS = {
     { i: 'todo', x: 0, y: 24, w: 1, h: 4, minW: 1, minH: 3 },
     { i: 'water', x: 1, y: 24, w: 1, h: 4, minW: 1, minH: 3 },
     { i: 'translate', x: 0, y: 28, w: 2, h: 4, minW: 1, minH: 3 },
+    { i: 'monitor', x: 0, y: 32, w: 2, h: 5, minW: 1, minH: 3 },
   ],
 }
 
@@ -64,6 +68,7 @@ const WIDGETS = [
   { key: 'todo', Component: TodoPanel },
   { key: 'water', Component: WaterPanel },
   { key: 'translate', Component: TranslatePanel },
+  { key: 'monitor', Component: MonitorPanel },
 ]
 
 function SizeButtons({ widgetKey, layouts, onResize }) {
@@ -157,7 +162,7 @@ function App() {
   const [layouts, setLayouts] = useState(() => {
     try {
       // Layout version: bump this when grid system changes (e.g. 2-col → 4-col)
-      const LAYOUT_VERSION = 6
+      const LAYOUT_VERSION = 7
       const savedVersion = parseInt(localStorage.getItem('layout_version') || '0')
       if (savedVersion < LAYOUT_VERSION) {
         localStorage.setItem('layout_version', String(LAYOUT_VERSION))

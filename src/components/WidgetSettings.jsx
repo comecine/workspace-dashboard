@@ -10,6 +10,7 @@ export const DEFAULT_WIDGET_CONFIG = {
   todo: { visible: true, title: 'To-Do', icon: '✅', iconClass: 'text-rose-500 dark:text-rose-400' },
   water: { visible: true, title: '喝水提醒', icon: '💧', iconClass: 'text-sky-500 dark:text-sky-400' },
   translate: { visible: true, title: 'Translate', icon: 'A', iconClass: 'text-violet-500 dark:text-violet-400 glow-violet' },
+  monitor: { visible: true, title: 'Monitor', icon: '🔥', iconClass: 'text-orange-500 dark:text-orange-400' },
 }
 
 export function loadWidgetConfig() {

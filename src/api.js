@@ -284,6 +284,22 @@ export async function removeLink(id) {
   return res.json()
 }
 
+// ===== Monitor API =====
+const getMonitorApiUrl = () => WORKER_URL ? `${WORKER_URL}/api/monitor` : ''
+
+export function hasMonitorApi() {
+  return !!WORKER_URL
+}
+
+export async function fetchMonitorData() {
+  const base = getMonitorApiUrl()
+  if (!base) return null
+  const res = await fetch(base)
+  if (!res.ok) throw new Error(`Monitor API ${res.status}`)
+  const data = await res.json()
+  return data.success ? data : null
+}
+
 // ===== To-Do API (D1) =====
 const getTodosApiUrl = () => WORKER_URL ? `${WORKER_URL}/api/todos` : ''
 

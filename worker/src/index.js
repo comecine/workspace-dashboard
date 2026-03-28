@@ -250,6 +250,93 @@ export default {
         }
       }
 
+      // ===== Monitor: Cloudflare Resources =====
+      if (path === '/api/monitor' && method === 'GET') {
+        const CF_TOKEN = env.CF_API_TOKEN;
+        const ACCT = '01a543f1afca24d791ba7b5d1f0014c2';
+        if (!CF_TOKEN) {
+          return Response.json({ error: 'CF_API_TOKEN not set' }, { status: 500, headers: corsHeaders });
+        }
+        const cfHeaders = { 'Authorization': `Bearer ${CF_TOKEN}`, 'Content-Type': 'application/json' };
+        const cfApi = (ep) => fetch(`https://api.cloudflare.com/client/v4/accounts/${ACCT}${ep}`, { headers: cfHeaders }).then(r => r.json());
+
+        // GraphQL for Workers analytics (last 24h)
+        const now = new Date();
+        const yesterday = new Date(now - 86400000);
+        const gqlBody = JSON.stringify({
+          query: `query {
+            viewer {
+              accounts(filter: {accountTag: "${ACCT}"}) {
+                workersInvocationsAdaptive(limit: 50, filter: {datetime_geq: "${yesterday.toISOString()}", datetime_leq: "${now.toISOString()}"}) {
+                  sum { requests errors subrequests }
+                  dimensions { scriptName status }
+                }
+                d1AnalyticsAdaptive: workersInvocationsAdaptive(limit: 10, filter: {datetime_geq: "${yesterday.toISOString()}", datetime_leq: "${now.toISOString()}"}) {
+                  sum { requests }
+                  dimensions { scriptName }
+                }
+              }
+            }
+          }`
+        });
+        const gqlFetch = fetch('https://api.cloudflare.com/client/v4/graphql', {
+          method: 'POST', headers: cfHeaders, body: gqlBody
+        }).then(r => r.json()).catch(() => null);
+
+        // Parallel fetches
+        const [workers, pages, d1s, gqlData] = await Promise.all([
+          cfApi('/workers/scripts'),
+          cfApi('/pages/projects'),
+          cfApi('/d1/database'),
+          gqlFetch,
+        ]);
+
+        // Parse GraphQL analytics
+        const workerStats = {};
+        const gqlAccounts = gqlData?.data?.viewer?.accounts?.[0];
+        if (gqlAccounts?.workersInvocationsAdaptive) {
+          for (const entry of gqlAccounts.workersInvocationsAdaptive) {
+            const name = entry.dimensions.scriptName;
+            if (!workerStats[name]) workerStats[name] = { requests: 0, errors: 0, subrequests: 0 };
+            workerStats[name].requests += entry.sum.requests;
+            workerStats[name].errors += entry.sum.errors;
+            workerStats[name].subrequests += entry.sum.subrequests;
+          }
+        }
+
+        // Build response
+        const result = {
+          workers: (workers.result || []).map(w => ({
+            name: w.id,
+            modified: w.modified_on,
+            stats: workerStats[w.id] || { requests: 0, errors: 0, subrequests: 0 },
+          })),
+          pages: (pages.result || []).map(p => ({
+            name: p.name,
+            subdomain: p.subdomain,
+            domains: p.domains || [],
+            latestDeploy: p.latest_deployment?.modified_on || null,
+            latestStatus: p.latest_deployment?.latest_stage?.status || 'unknown',
+          })),
+          d1: (d1s.result || []).map(d => ({
+            name: d.name,
+            uuid: d.uuid,
+            fileSize: d.file_size,
+            numTables: d.num_tables,
+          })),
+          limits: {
+            workers: { daily: 100000, label: 'Workers Free: 100K req/day' },
+            d1: { reads: 5000000, writes: 100000, storage: 5 * 1024 * 1024 * 1024, label: 'D1 Free: 5M reads, 100K writes/day, 5GB' },
+            pages: { builds: 500, label: 'Pages Free: 500 builds/month' },
+          },
+          fetchedAt: now.toISOString(),
+        };
+
+        return Response.json({ success: true, ...result }, {
+          headers: { ...corsHeaders, 'Cache-Control': 'public, max-age=300' },
+        });
+      }
+
       // ===== To-Do CRUD (D1) =====
       if (path === '/api/todos') {
         if (method === 'GET') {
