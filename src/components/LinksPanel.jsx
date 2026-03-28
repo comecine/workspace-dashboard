@@ -218,9 +218,8 @@ export default function LinksPanel() {
             <thead>
               <tr className="border-b border-gray-300/20 dark:border-white/10 text-xs text-gray-500 dark:text-gray-500">
                 <th className="py-2 px-1 w-6" />
-                <th className="py-2 px-2 text-left font-medium w-[22%]">名稱</th>
-                <th className="py-2 px-2 text-left font-medium">網址</th>
-                <th className="py-2 px-2 text-left font-medium w-[25%]">說明</th>
+                <th className="py-2 px-2 text-left font-medium">名稱</th>
+                <th className="py-2 px-2 text-left font-medium w-[30%]">說明</th>
                 <th className="py-2 px-1 w-12" />
               </tr>
             </thead>
@@ -249,17 +248,6 @@ export default function LinksPanel() {
                         {link.icon}
                       </div>
                       <span className="font-medium text-xs">{link.name}</span>
-                    </a>
-                  </td>
-                  <td className="py-2.5 px-2">
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-gray-500 dark:text-gray-500 hover:text-orange-400 transition-colors truncate block max-w-[200px]"
-                      title={link.url}
-                    >
-                      {link.url.replace(/^https?:\/\//, '')}
                     </a>
                   </td>
                   <td className="py-2.5 px-2 text-xs text-gray-500 dark:text-gray-400">
