@@ -211,70 +211,53 @@ export default function LinksPanel() {
         </div>
       )}
 
-      {/* Links Table */}
+      {/* Links Grid */}
       {links.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-300/20 dark:border-white/10 text-xs text-gray-500 dark:text-gray-500">
-                <th className="py-2 px-1 w-6" />
-                <th className="py-2 px-2 text-left font-medium">名稱</th>
-                <th className="py-2 px-2 text-left font-medium w-[30%]">說明</th>
-                <th className="py-2 px-1 w-12" />
-              </tr>
-            </thead>
-            <tbody>
-              {links.map((link, idx) => (
-                <tr
-                  key={link.id}
-                  draggable
-                  onDragStart={() => handleDragStart(idx)}
-                  onDragOver={(e) => handleDragOver(e, idx)}
-                  onDrop={() => handleDrop(idx)}
-                  onDragEnd={handleDragEnd}
-                  className={`border-b border-gray-200/10 dark:border-white/5 hover:bg-white/5 dark:hover:bg-white/[0.03] transition-colors group cursor-grab active:cursor-grabbing ${dragIdx === idx ? 'opacity-30' : ''} ${overIdx === idx && dragIdx !== idx ? 'border-t-2 !border-t-orange-400' : ''}`}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {links.map((link, idx) => (
+            <div
+              key={link.id}
+              draggable
+              onDragStart={() => handleDragStart(idx)}
+              onDragOver={(e) => handleDragOver(e, idx)}
+              onDrop={() => handleDrop(idx)}
+              onDragEnd={handleDragEnd}
+              className={`group relative cursor-grab active:cursor-grabbing ${dragIdx === idx ? 'opacity-30' : ''} ${overIdx === idx && dragIdx !== idx ? 'ring-2 ring-orange-400' : ''}`}
+            >
+              <a
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="glass-inner rounded-lg p-3 flex flex-col items-center gap-2 hover:bg-white/10 dark:hover:bg-white/[0.06] hover:scale-[1.03] transition-all block text-center"
+              >
+                <div className="link-icon w-10 h-10 rounded-xl bg-orange-600/15 dark:bg-orange-500/15 text-orange-500 dark:text-orange-400 flex items-center justify-center text-sm font-bold">
+                  {link.icon}
+                </div>
+                <div>
+                  <div className="font-medium text-xs">{link.name}</div>
+                  {link.desc && (
+                    <div className="text-[10px] text-gray-500 dark:text-gray-500 mt-0.5 truncate max-w-[100px]">{link.desc}</div>
+                  )}
+                </div>
+              </a>
+              <div className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={(e) => { e.preventDefault(); startEdit(link) }}
+                  className="w-5 h-5 rounded bg-black/30 text-gray-300 hover:text-blue-400 text-[10px] flex items-center justify-center transition-all"
+                  title="Edit"
                 >
-                  <td className="py-2.5 px-1 text-center text-gray-400 dark:text-gray-600 select-none">
-                    <span className="text-[10px] opacity-50 group-hover:opacity-100 transition-opacity">⠿</span>
-                  </td>
-                  <td className="py-2.5 px-2">
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 hover:text-orange-400 transition-colors whitespace-nowrap"
-                    >
-                      <div className="link-icon w-6 h-6 rounded-md bg-orange-600/15 dark:bg-orange-500/15 text-orange-500 dark:text-orange-400 flex items-center justify-center text-[10px] font-bold shrink-0">
-                        {link.icon}
-                      </div>
-                      <span className="font-medium text-xs">{link.name}</span>
-                    </a>
-                  </td>
-                  <td className="py-2.5 px-2 text-xs text-gray-500 dark:text-gray-400">
-                    {link.desc || <span className="text-gray-400/50 dark:text-gray-600">---</span>}
-                  </td>
-                  <td className="py-2.5 px-1 text-right">
-                    <div className="flex gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => startEdit(link)}
-                        className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 text-xs transition-all"
-                        title="Edit"
-                      >
-                        edit
-                      </button>
-                      <button
-                        onClick={() => handleRemoveLink(link.id)}
-                        className="text-gray-400 hover:text-red-500 dark:hover:text-red-400 text-xs transition-all"
-                        title="Delete"
-                      >
-                        x
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  ✎
+                </button>
+                <button
+                  onClick={(e) => { e.preventDefault(); handleRemoveLink(link.id) }}
+                  className="w-5 h-5 rounded bg-black/30 text-gray-300 hover:text-red-400 text-[10px] flex items-center justify-center transition-all"
+                  title="Delete"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <div className="text-center text-gray-400 dark:text-gray-600 text-sm py-6">
