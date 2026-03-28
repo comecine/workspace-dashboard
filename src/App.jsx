@@ -10,6 +10,7 @@ import WeatherPanel from './components/WeatherPanel'
 import TodoPanel from './components/TodoPanel'
 import WaterPanel from './components/WaterPanel'
 import ReminderBar from './components/ReminderBar'
+import HeaderWeather from './components/HeaderWeather'
 import { fetchLayout, saveLayout, hasLayoutApi } from './api'
 
 // Widget size presets: S=1col, M=2col, L=4col (full width)
@@ -302,6 +303,9 @@ function App() {
         <h1 className="text-lg sm:text-xl font-bold tracking-tight gradient-text">
           Workspace Dashboard
         </h1>
+        <div className="hidden sm:block">
+          <HeaderWeather />
+        </div>
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="hidden sm:block">
             <ReminderBar />
