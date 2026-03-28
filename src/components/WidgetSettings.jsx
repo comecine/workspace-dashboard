@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { hasWidgetConfigApi, saveWidgetConfigToD1 } from '../api'
 
 export const DEFAULT_WIDGET_CONFIG = {
   stocks: { visible: true, title: 'Taiwan Stocks', icon: '$', iconClass: 'text-emerald-500 dark:text-emerald-400 glow-emerald' },
@@ -39,6 +40,10 @@ export function saveWidgetConfig(config) {
     if (Object.keys(entry).length > 0) toSave[key] = entry
   }
   localStorage.setItem('widget_config', JSON.stringify(toSave))
+  // Sync to D1
+  if (hasWidgetConfigApi()) {
+    saveWidgetConfigToD1(toSave).catch(e => console.warn('D1 widget config save failed', e))
+  }
 }
 
 export default function WidgetSettings({ config, onChange, onClose }) {

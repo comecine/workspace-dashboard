@@ -108,6 +108,34 @@ export async function saveLayout(layout) {
   return res.json()
 }
 
+// ===== Widget Config API (D1) =====
+const getWidgetConfigApiUrl = () => WORKER_URL ? `${WORKER_URL}/api/widget-config` : ''
+
+export function hasWidgetConfigApi() {
+  return !!WORKER_URL
+}
+
+export async function fetchWidgetConfig() {
+  const base = getWidgetConfigApiUrl()
+  if (!base) return null
+  const res = await fetch(base)
+  if (!res.ok) throw new Error(`Widget Config API ${res.status}`)
+  const data = await res.json()
+  return data.success ? data.config : null
+}
+
+export async function saveWidgetConfigToD1(config) {
+  const base = getWidgetConfigApiUrl()
+  if (!base) return null
+  const res = await fetch(base, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ config }),
+  })
+  if (!res.ok) throw new Error(`Widget Config API ${res.status}`)
+  return res.json()
+}
+
 // ===== Rate History API (D1) =====
 const getRateHistoryApiUrl = () => WORKER_URL ? `${WORKER_URL}/api/rate-history` : ''
 

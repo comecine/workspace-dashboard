@@ -12,7 +12,7 @@ import PomodoroPanel from './components/PomodoroPanel'
 import ReminderBar from './components/ReminderBar'
 import HeaderWeather from './components/HeaderWeather'
 import WidgetSettings, { loadWidgetConfig, saveWidgetConfig, DEFAULT_WIDGET_CONFIG } from './components/WidgetSettings'
-import { fetchLayout, saveLayout, hasLayoutApi } from './api'
+import { fetchLayout, saveLayout, hasLayoutApi, hasWidgetConfigApi, fetchWidgetConfig } from './api'
 
 // Widget size presets: S=1col, M=2col, L=4col (full width)
 const SIZE_PRESETS = {
@@ -205,6 +205,23 @@ function App() {
           console.warn('D1 layout fetch failed', e)
         }
       }
+      // Load widget config from D1
+      if (hasWidgetConfigApi()) {
+        try {
+          const savedConfig = await fetchWidgetConfig()
+          if (savedConfig) {
+            const merged = {}
+            for (const key of Object.keys(DEFAULT_WIDGET_CONFIG)) {
+              merged[key] = { ...DEFAULT_WIDGET_CONFIG[key], ...savedConfig[key] }
+            }
+            setWidgetConfig(merged)
+            localStorage.setItem('widget_config', JSON.stringify(savedConfig))
+          }
+        } catch (e) {
+          console.warn('D1 widget config fetch failed', e)
+        }
+      }
+
       setLayoutReady(true)
     }
     load()
