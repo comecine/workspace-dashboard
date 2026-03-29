@@ -234,7 +234,7 @@ export default function CalendarPanel({ customTitle }) {
               </div>
             ) : (
               <div className="glass-inner rounded-lg px-3 py-3 text-sm text-gray-400 dark:text-gray-600 text-center">
-                今天沒有行程
+                <span className="opacity-60">Today is wide open -- deep work time!</span>
               </div>
             )}
           </div>

@@ -96,9 +96,24 @@ export default function PomodoroPanel({ customTitle }) {
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <span className="text-red-500 dark:text-red-400 text-xl">🍅</span> {customTitle || 'Pomodoro'}
         </h2>
-        <span className="text-xs text-gray-500 dark:text-gray-500">
-          今日 {sessions} 回合
-        </span>
+        <div className="flex items-center gap-1.5">
+          <div className="flex gap-0.5">
+            {Array.from({ length: Math.max(4, sessions) }).map((_, i) => (
+              <span
+                key={i}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  i < sessions
+                    ? 'bg-red-500 dark:bg-red-400 scale-100'
+                    : 'bg-gray-300/30 dark:bg-white/10 scale-90'
+                }`}
+                style={i < sessions ? { animationDelay: `${i * 0.1}s` } : {}}
+              />
+            ))}
+          </div>
+          <span className="text-xs text-gray-500 dark:text-gray-500 tabular-nums">
+            {sessions}
+          </span>
+        </div>
       </div>
 
       {/* Mode tabs */}
@@ -120,7 +135,7 @@ export default function PomodoroPanel({ customTitle }) {
 
       {/* Timer ring */}
       <div className="flex flex-col items-center">
-        <div className={`relative w-32 h-32 mb-4 ${timeLeft === 0 && !running ? 'animate-pulse' : ''}`}>
+        <div className={`relative w-32 h-32 mb-4 transition-all ${timeLeft === 0 && !running ? 'animate-pulse scale-105' : ''}`}>
           <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
             <circle cx="60" cy="60" r="54" fill="none" stroke="currentColor" strokeWidth="4" className="text-gray-200/20 dark:text-white/5" />
             <circle
@@ -140,6 +155,13 @@ export default function PomodoroPanel({ customTitle }) {
             <span className="text-[10px] text-gray-500 dark:text-gray-500 mt-0.5">{mode.label}</span>
           </div>
         </div>
+
+        {/* Completion nudge */}
+        {timeLeft === 0 && !running && (
+          <div className={`text-xs font-medium mb-2 animate-fade-in ${mode.key === 'work' ? 'text-emerald-500' : 'text-red-400'}`}>
+            {mode.key === 'work' ? 'Nice focus! Take a break.' : 'Recharged! Ready to focus?'}
+          </div>
+        )}
 
         {/* Controls */}
         <div className="flex gap-3">

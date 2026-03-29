@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { fetchTodos, addTodo, toggleTodo, removeTodo, hasLinksApi } from '../api'
 
 const LOCAL_KEY = 'workspace_todos'
@@ -92,10 +92,32 @@ export default function TodoPanel({ customTitle }) {
         </h2>
         {todos.length > 0 && (
           <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
-            {pending.length} 待辦
+            {completed.length}/{todos.length} done
           </span>
         )}
       </div>
+
+      {/* Progress bar */}
+      {todos.length > 0 && (
+        <div className="mb-3">
+          <div className="w-full h-1.5 bg-gray-200/20 dark:bg-white/5 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-500 ease-out"
+              style={{
+                width: `${todos.length === 0 ? 0 : (completed.length / todos.length) * 100}%`,
+                background: completed.length === todos.length && todos.length > 0
+                  ? 'linear-gradient(90deg, #10b981, #34d399)'
+                  : 'linear-gradient(90deg, #f43f5e, #fb7185)',
+              }}
+            />
+          </div>
+          {completed.length === todos.length && todos.length > 0 && (
+            <div className="text-center text-xs text-emerald-500 mt-1.5 font-medium animate-fade-in">
+              All clear! Great job today.
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Input */}
       <div className="flex gap-2 mb-3">
@@ -123,17 +145,23 @@ export default function TodoPanel({ customTitle }) {
           <div className="h-8 skeleton-shimmer rounded-lg" />
         </div>
       ) : todos.length === 0 ? (
-        <div className="text-center text-sm text-gray-400 dark:text-gray-600 py-6">
-          沒有待辦事項
+        <div className="text-center text-sm text-gray-400 dark:text-gray-600 py-6 cursor-pointer hover:text-rose-400 transition-colors" onClick={() => inputRef.current?.focus()}>
+          <div className="text-2xl mb-1 opacity-30">&#9998;</div>
+          點這裡開始寫下今天要做的事
         </div>
       ) : (
         <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1">
           {/* Pending */}
           {pending.map(todo => (
-            <div key={todo.id} className="glass-inner rounded-lg px-3 py-2 flex items-center gap-2 group">
+            <div key={todo.id} id={`todo-${todo.id}`} className="glass-inner rounded-lg px-3 py-2 flex items-center gap-2 group">
               <button
-                onClick={() => handleToggle(todo.id, todo.done)}
-                className="w-4 h-4 rounded border border-gray-300 dark:border-gray-600 flex-shrink-0 hover:border-rose-500 transition-colors flex items-center justify-center"
+                onClick={() => {
+                  // Brief visual celebration before toggling
+                  const el = document.getElementById(`todo-${todo.id}`)
+                  if (el) el.classList.add('todo-completing')
+                  setTimeout(() => handleToggle(todo.id, todo.done), 300)
+                }}
+                className="w-4 h-4 rounded border border-gray-300 dark:border-gray-600 flex-shrink-0 hover:border-rose-500 hover:bg-rose-500/10 transition-all flex items-center justify-center hover:scale-110"
               />
               <span className="flex-1 text-sm truncate">{todo.text}</span>
               <button

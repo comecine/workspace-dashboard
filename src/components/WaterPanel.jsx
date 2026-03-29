@@ -189,7 +189,11 @@ export default function WaterPanel({ customTitle }) {
         <div className="flex items-center justify-between">
           <div className="flex gap-0.5">
             {Array.from({ length: DAILY_GOAL }).map((_, i) => (
-              <span key={i} className={`text-sm ${i < cups ? '' : 'opacity-20'}`}>
+              <span
+                key={i}
+                className={`text-sm transition-all duration-300 ${i < cups ? 'scale-110' : 'opacity-20 scale-90 grayscale'}`}
+                style={i < cups ? { transitionDelay: `${i * 50}ms` } : {}}
+              >
                 💧
               </span>
             ))}
@@ -204,7 +208,7 @@ export default function WaterPanel({ customTitle }) {
             </button>
             <button
               onClick={addCup}
-              className="w-6 h-6 flex items-center justify-center text-xs rounded-md bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 transition-all"
+              className="w-6 h-6 flex items-center justify-center text-xs rounded-md bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 transition-all hover:scale-125 active:scale-90"
             >
               +
             </button>
