@@ -13,7 +13,7 @@ import MonitorPanel from './components/MonitorPanel'
 import SmsAlertsPanel from './components/SmsAlertsPanel'
 import ReminderBar from './components/ReminderBar'
 import HeaderWeather from './components/HeaderWeather'
-import WidgetSettings, { loadWidgetConfig, saveWidgetConfig, DEFAULT_WIDGET_CONFIG } from './components/WidgetSettings'
+import WidgetSettings, { loadWidgetConfig, saveWidgetConfig, DEFAULT_WIDGET_CONFIG, TABS } from './components/WidgetSettings'
 import DraggableHeaderItems, { loadHeaderOrder } from './components/DraggableHeaderItems'
 import { fetchLayout, saveLayout, hasLayoutApi, hasWidgetConfigApi, fetchWidgetConfig } from './api'
 
@@ -24,44 +24,49 @@ const SIZE_PRESETS = {
   L: { w: 4, h: 6 },
 }
 
-const DEFAULT_LAYOUTS = {
-  lg: [
-    { i: 'stocks', x: 0, y: 0, w: 2, h: 5, minW: 1, minH: 3 },
-    { i: 'links', x: 2, y: 0, w: 2, h: 5, minW: 1, minH: 2 },
-    { i: 'calendar', x: 0, y: 5, w: 2, h: 5, minW: 1, minH: 3 },
-    { i: 'currency', x: 2, y: 5, w: 2, h: 5, minW: 1, minH: 3 },
-    { i: 'pomodoro', x: 0, y: 10, w: 1, h: 5, minW: 1, minH: 4 },
-    { i: 'todo', x: 1, y: 10, w: 1, h: 5, minW: 1, minH: 3 },
-    { i: 'water', x: 2, y: 10, w: 1, h: 5, minW: 1, minH: 3 },
-    { i: 'translate', x: 3, y: 10, w: 1, h: 5, minW: 1, minH: 3 },
-    { i: 'monitor', x: 0, y: 15, w: 2, h: 5, minW: 1, minH: 3 },
-    { i: 'sms-alerts', x: 2, y: 15, w: 2, h: 5, minW: 1, minH: 3 },
-  ],
-  md: [
-    { i: 'stocks', x: 0, y: 0, w: 2, h: 5, minW: 1, minH: 3 },
-    { i: 'links', x: 2, y: 0, w: 2, h: 5, minW: 1, minH: 2 },
-    { i: 'calendar', x: 0, y: 5, w: 2, h: 5, minW: 1, minH: 3 },
-    { i: 'currency', x: 2, y: 5, w: 2, h: 5, minW: 1, minH: 3 },
-    { i: 'pomodoro', x: 0, y: 10, w: 1, h: 5, minW: 1, minH: 4 },
-    { i: 'todo', x: 1, y: 10, w: 1, h: 5, minW: 1, minH: 3 },
-    { i: 'water', x: 2, y: 10, w: 1, h: 5, minW: 1, minH: 3 },
-    { i: 'translate', x: 3, y: 10, w: 1, h: 5, minW: 1, minH: 3 },
-    { i: 'monitor', x: 0, y: 15, w: 2, h: 5, minW: 1, minH: 3 },
-    { i: 'sms-alerts', x: 2, y: 15, w: 2, h: 5, minW: 1, minH: 3 },
-  ],
-  sm: [
-    { i: 'stocks', x: 0, y: 0, w: 2, h: 5, minW: 1, minH: 3 },
-    { i: 'links', x: 0, y: 5, w: 2, h: 4, minW: 1, minH: 2 },
-    { i: 'calendar', x: 0, y: 9, w: 2, h: 5, minW: 1, minH: 3 },
-    { i: 'currency', x: 0, y: 14, w: 2, h: 5, minW: 1, minH: 3 },
-    { i: 'pomodoro', x: 0, y: 19, w: 2, h: 5, minW: 1, minH: 4 },
-    { i: 'todo', x: 0, y: 24, w: 1, h: 4, minW: 1, minH: 3 },
-    { i: 'water', x: 1, y: 24, w: 1, h: 4, minW: 1, minH: 3 },
-    { i: 'translate', x: 0, y: 28, w: 2, h: 4, minW: 1, minH: 3 },
-    { i: 'monitor', x: 0, y: 32, w: 2, h: 5, minW: 1, minH: 3 },
-    { i: 'sms-alerts', x: 0, y: 37, w: 2, h: 5, minW: 1, minH: 3 },
-  ],
+// All widget layout items (used to generate per-tab defaults)
+const ALL_LAYOUT_ITEMS = {
+  stocks:      { x: 0, y: 0, w: 2, h: 5, minW: 1, minH: 3 },
+  links:       { x: 0, y: 0, w: 2, h: 5, minW: 1, minH: 2 },
+  calendar:    { x: 2, y: 0, w: 2, h: 5, minW: 1, minH: 3 },
+  currency:    { x: 2, y: 0, w: 2, h: 5, minW: 1, minH: 3 },
+  pomodoro:    { x: 0, y: 5, w: 1, h: 5, minW: 1, minH: 4 },
+  todo:        { x: 1, y: 5, w: 1, h: 5, minW: 1, minH: 3 },
+  water:       { x: 2, y: 0, w: 1, h: 5, minW: 1, minH: 3 },
+  translate:   { x: 2, y: 5, w: 2, h: 5, minW: 1, minH: 3 },
+  monitor:     { x: 0, y: 0, w: 2, h: 5, minW: 1, minH: 3 },
+  'sms-alerts':{ x: 2, y: 0, w: 2, h: 5, minW: 1, minH: 3 },
 }
+
+function buildDefaultLayouts(tabKey, widgetConfig) {
+  const keys = Object.keys(DEFAULT_WIDGET_CONFIG).filter(k => (widgetConfig[k]?.tab || DEFAULT_WIDGET_CONFIG[k].tab) === tabKey)
+  const items = keys.map(k => ({ i: k, ...ALL_LAYOUT_ITEMS[k] }))
+  // Auto-arrange: stack items vertically in pairs
+  let y = 0
+  const arranged = []
+  for (let idx = 0; idx < items.length; idx++) {
+    const item = items[idx]
+    // For lg/md: place in 4-col grid
+    const x = (idx % 2) * 2
+    if (idx % 2 === 0 && idx > 0) y += 5
+    arranged.push({ ...item, x, y: idx === 0 ? 0 : y })
+  }
+  // Reset y for sm (single column)
+  const smArranged = items.map((item, idx) => ({ ...item, x: 0, y: idx * 5, w: 2 }))
+  return {
+    lg: arranged.map(a => ({ ...a })),
+    md: arranged.map(a => ({ ...a })),
+    sm: smArranged,
+  }
+}
+
+function getDefaultLayouts(config) {
+  return Object.fromEntries(
+    TABS.map(t => [t.key, buildDefaultLayouts(t.key, config || DEFAULT_WIDGET_CONFIG)])
+  )
+}
+
+const DEFAULT_LAYOUTS = getDefaultLayouts(DEFAULT_WIDGET_CONFIG)
 
 const WIDGETS = [
   { key: 'stocks', Component: StockPanel },
@@ -101,9 +106,14 @@ function SizeButtons({ widgetKey, layouts, onResize }) {
   )
 }
 
-function WidgetGrid({ layouts, onLayoutChange, onResize, locked, widgetConfig }) {
+function WidgetGrid({ layouts, onLayoutChange, onResize, locked, widgetConfig, activeTab }) {
   const { containerRef, width: containerWidth, mounted } = useContainerWidth()
-  const visibleWidgets = WIDGETS.filter(w => widgetConfig[w.key]?.visible !== false)
+  const visibleWidgets = WIDGETS.filter(w => {
+    const cfg = widgetConfig[w.key]
+    if (cfg?.visible === false) return false
+    const tab = cfg?.tab || DEFAULT_WIDGET_CONFIG[w.key]?.tab || 'life'
+    return tab === activeTab
+  })
 
   // Filter layouts to only include visible widgets
   const filteredLayouts = {}
@@ -164,27 +174,25 @@ function App() {
     const saved = localStorage.getItem('theme')
     return saved ? saved === 'dark' : true
   })
-  const [layouts, setLayouts] = useState(() => {
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('active_tab') || 'life'
+  })
+  const [tabLayouts, setTabLayouts] = useState(() => {
     try {
-      // Layout version: bump this when grid system changes (e.g. 2-col → 4-col)
-      const LAYOUT_VERSION = 8
+      const LAYOUT_VERSION = 9
       const savedVersion = parseInt(localStorage.getItem('layout_version') || '0')
       if (savedVersion < LAYOUT_VERSION) {
         localStorage.setItem('layout_version', String(LAYOUT_VERSION))
         localStorage.removeItem('widget_layouts')
-        return DEFAULT_LAYOUTS
+        localStorage.removeItem('tab_layouts')
+        return { ...DEFAULT_LAYOUTS }
       }
-      const saved = localStorage.getItem('widget_layouts')
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        const widgetKeys = WIDGETS.map(w => w.key)
-        const savedKeys = parsed.lg?.map(l => l.i) || []
-        const allPresent = widgetKeys.every(k => savedKeys.includes(k))
-        if (allPresent) return parsed
-      }
+      const saved = localStorage.getItem('tab_layouts')
+      if (saved) return { ...DEFAULT_LAYOUTS, ...JSON.parse(saved) }
     } catch {}
-    return DEFAULT_LAYOUTS
+    return { ...DEFAULT_LAYOUTS }
   })
+  const layouts = tabLayouts[activeTab] || DEFAULT_LAYOUTS[activeTab] || { lg: [], md: [], sm: [] }
   const [layoutReady, setLayoutReady] = useState(false)
   const [locked, setLocked] = useState(() => {
     return localStorage.getItem('layout_locked') === 'true'
@@ -201,17 +209,10 @@ function App() {
       if (hasLayoutApi()) {
         try {
           const saved = await fetchLayout()
-          if (saved) {
-            const maxW = Math.max(...(saved.lg || []).map(l => l.x + l.w))
-            if (maxW > 2) {
-              const widgetKeys = WIDGETS.map(w => w.key)
-              const savedKeys = saved.lg?.map(l => l.i) || []
-              const allPresent = widgetKeys.every(k => savedKeys.includes(k))
-              if (allPresent) {
-                setLayouts(saved)
-                localStorage.setItem('widget_layouts', JSON.stringify(saved))
-              }
-            }
+          if (saved && saved.life) {
+            // New per-tab format
+            setTabLayouts(prev => ({ ...prev, ...saved }))
+            localStorage.setItem('tab_layouts', JSON.stringify(saved))
           }
         } catch (e) {
           console.warn('D1 layout fetch failed', e)
@@ -250,44 +251,19 @@ function App() {
   }, [dark])
 
   const onLayoutChange = useCallback((layout, allLayouts) => {
-    setLayouts(prev => {
-      // Compare with current state — skip if nothing actually changed (mount-time fire)
-      const prevStr = JSON.stringify(prev)
-      const merged = { ...prev, ...allLayouts }
+    setTabLayouts(prev => {
+      const currentTabLayouts = prev[activeTab] || {}
+      const prevStr = JSON.stringify(currentTabLayouts)
+      const merged = { ...currentTabLayouts, ...allLayouts }
       const mergedStr = JSON.stringify(merged)
       if (prevStr === mergedStr) return prev
 
-      // Mark as user-initiated change after first real diff
       if (!initializedRef.current) {
         initializedRef.current = true
       }
 
-      localStorage.setItem('widget_layouts', JSON.stringify(merged))
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
-      saveTimerRef.current = setTimeout(() => {
-        if (hasLayoutApi()) {
-          saveLayout(merged).catch(e => console.warn('D1 layout save failed', e))
-        }
-      }, 1000)
-      return merged
-    })
-  }, [])
-
-  const onWidgetResize = useCallback((widgetKey, size) => {
-    const preset = SIZE_PRESETS[size]
-    if (!preset) return
-    setLayouts(prev => {
-      const next = {}
-      for (const bp of Object.keys(prev)) {
-        next[bp] = prev[bp].map(item => {
-          if (item.i !== widgetKey) return item
-          const cols = bp === 'sm' ? 2 : 4
-          const w = Math.min(preset.w, cols)
-          const x = item.x + w > cols ? 0 : item.x
-          return { ...item, w, h: preset.h, x }
-        })
-      }
-      localStorage.setItem('widget_layouts', JSON.stringify(next))
+      const next = { ...prev, [activeTab]: merged }
+      localStorage.setItem('tab_layouts', JSON.stringify(next))
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
       saveTimerRef.current = setTimeout(() => {
         if (hasLayoutApi()) {
@@ -296,15 +272,45 @@ function App() {
       }, 1000)
       return next
     })
-  }, [])
+  }, [activeTab])
+
+  const onWidgetResize = useCallback((widgetKey, size) => {
+    const preset = SIZE_PRESETS[size]
+    if (!preset) return
+    setTabLayouts(prev => {
+      const currentTabLayouts = prev[activeTab] || {}
+      const nextTab = {}
+      for (const bp of Object.keys(currentTabLayouts)) {
+        nextTab[bp] = (currentTabLayouts[bp] || []).map(item => {
+          if (item.i !== widgetKey) return item
+          const cols = bp === 'sm' ? 2 : 4
+          const w = Math.min(preset.w, cols)
+          const x = item.x + w > cols ? 0 : item.x
+          return { ...item, w, h: preset.h, x }
+        })
+      }
+      const next = { ...prev, [activeTab]: nextTab }
+      localStorage.setItem('tab_layouts', JSON.stringify(next))
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = setTimeout(() => {
+        if (hasLayoutApi()) {
+          saveLayout(next).catch(e => console.warn('D1 layout save failed', e))
+        }
+      }, 1000)
+      return next
+    })
+  }, [activeTab])
 
   const resetLayout = useCallback(() => {
-    setLayouts({ ...DEFAULT_LAYOUTS })
-    localStorage.setItem('widget_layouts', JSON.stringify(DEFAULT_LAYOUTS))
-    if (hasLayoutApi()) {
-      saveLayout(DEFAULT_LAYOUTS).catch(e => console.warn('D1 layout reset failed', e))
-    }
-  }, [])
+    setTabLayouts(prev => {
+      const next = { ...prev, [activeTab]: DEFAULT_LAYOUTS[activeTab] }
+      localStorage.setItem('tab_layouts', JSON.stringify(next))
+      if (hasLayoutApi()) {
+        saveLayout(next).catch(e => console.warn('D1 layout reset failed', e))
+      }
+      return next
+    })
+  }, [activeTab])
 
   const toggleLock = useCallback(() => {
     setLocked(prev => {
@@ -412,9 +418,42 @@ function App() {
         <span>{seconds}</span>
       </div>
 
+      {/* Tab bar */}
+      <div className="relative z-10 px-3 sm:px-4 md:px-6 pt-3 sm:pt-4">
+        <div className="tab-bar flex gap-1 p-1 rounded-2xl glass-inner w-fit mx-auto">
+          {TABS.map(tab => {
+            const count = Object.keys(widgetConfig).filter(k => {
+              const cfg = widgetConfig[k]
+              if (cfg?.visible === false) return false
+              return (cfg?.tab || DEFAULT_WIDGET_CONFIG[k]?.tab) === tab.key
+            }).length
+            return (
+              <button
+                key={tab.key}
+                onClick={() => {
+                  setActiveTab(tab.key)
+                  localStorage.setItem('active_tab', tab.key)
+                }}
+                className={`tab-item px-4 sm:px-5 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 ${
+                  activeTab === tab.key
+                    ? 'tab-active bg-white/15 text-white shadow-lg'
+                    : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                }`}
+              >
+                <span>{tab.icon}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                  activeTab === tab.key ? 'bg-white/20' : 'bg-white/5'
+                }`}>{count}</span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       <main className="relative z-10 p-3 sm:p-4 md:p-6">
         {layoutReady && (
-          <WidgetGrid layouts={layouts} onLayoutChange={onLayoutChange} onResize={onWidgetResize} locked={locked} widgetConfig={widgetConfig} />
+          <WidgetGrid layouts={layouts} onLayoutChange={onLayoutChange} onResize={onWidgetResize} locked={locked} widgetConfig={widgetConfig} activeTab={activeTab} />
         )}
       </main>
 

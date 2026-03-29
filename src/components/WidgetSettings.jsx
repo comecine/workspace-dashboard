@@ -1,17 +1,23 @@
 import { useState } from 'react'
 import { hasWidgetConfigApi, saveWidgetConfigToD1 } from '../api'
 
+export const TABS = [
+  { key: 'life', label: '生活', icon: '🌿' },
+  { key: 'work', label: '工作', icon: '💼' },
+  { key: 'monitor', label: '監控', icon: '📡' },
+]
+
 export const DEFAULT_WIDGET_CONFIG = {
-  stocks: { visible: true, title: 'Taiwan Stocks', icon: '$', iconClass: 'text-emerald-500 dark:text-emerald-400 glow-emerald' },
-  links: { visible: true, title: 'Quick Links', icon: '@', iconClass: 'text-orange-400 glow-orange' },
-  calendar: { visible: true, title: 'Calendar', icon: '📅', iconClass: 'text-amber-500 dark:text-amber-400' },
-  currency: { visible: true, title: 'Exchange Rates', icon: '$', iconClass: 'text-blue-500 dark:text-blue-400 glow-blue' },
-  pomodoro: { visible: true, title: 'Pomodoro', icon: '🍅', iconClass: 'text-red-500 dark:text-red-400' },
-  todo: { visible: true, title: 'To-Do', icon: '✅', iconClass: 'text-rose-500 dark:text-rose-400' },
-  water: { visible: true, title: '喝水提醒', icon: '💧', iconClass: 'text-sky-500 dark:text-sky-400' },
-  translate: { visible: true, title: 'Translate', icon: 'A', iconClass: 'text-violet-500 dark:text-violet-400 glow-violet' },
-  monitor: { visible: true, title: 'Monitor', icon: '🔥', iconClass: 'text-orange-500 dark:text-orange-400' },
-  'sms-alerts': { visible: true, title: 'SMS Alerts', icon: '📨', iconClass: 'text-amber-500 dark:text-amber-400' },
+  stocks: { visible: true, title: 'Taiwan Stocks', icon: '$', iconClass: 'text-emerald-500 dark:text-emerald-400 glow-emerald', tab: 'life' },
+  links: { visible: true, title: 'Quick Links', icon: '@', iconClass: 'text-orange-400 glow-orange', tab: 'work' },
+  calendar: { visible: true, title: 'Calendar', icon: '📅', iconClass: 'text-amber-500 dark:text-amber-400', tab: 'life' },
+  currency: { visible: true, title: 'Exchange Rates', icon: '$', iconClass: 'text-blue-500 dark:text-blue-400 glow-blue', tab: 'work' },
+  pomodoro: { visible: true, title: 'Pomodoro', icon: '🍅', iconClass: 'text-red-500 dark:text-red-400', tab: 'life' },
+  todo: { visible: true, title: 'To-Do', icon: '✅', iconClass: 'text-rose-500 dark:text-rose-400', tab: 'work' },
+  water: { visible: true, title: '喝水提醒', icon: '💧', iconClass: 'text-sky-500 dark:text-sky-400', tab: 'life' },
+  translate: { visible: true, title: 'Translate', icon: 'A', iconClass: 'text-violet-500 dark:text-violet-400 glow-violet', tab: 'work' },
+  monitor: { visible: true, title: 'Monitor', icon: '🔥', iconClass: 'text-orange-500 dark:text-orange-400', tab: 'monitor' },
+  'sms-alerts': { visible: true, title: 'SMS Alerts', icon: '📨', iconClass: 'text-amber-500 dark:text-amber-400', tab: 'monitor' },
 }
 
 export function loadWidgetConfig() {
@@ -39,6 +45,7 @@ export function saveWidgetConfig(config) {
     const entry = {}
     if (val.visible !== def.visible) entry.visible = val.visible
     if (val.title !== def.title) entry.title = val.title
+    if (val.tab !== def.tab) entry.tab = val.tab
     if (Object.keys(entry).length > 0) toSave[key] = entry
   }
   localStorage.setItem('widget_config', JSON.stringify(toSave))
@@ -67,6 +74,13 @@ export default function WidgetSettings({ config, onChange, onClose }) {
     setDraft(prev => ({
       ...prev,
       [key]: { ...prev[key], title },
+    }))
+  }
+
+  const updateTab = (key, tab) => {
+    setDraft(prev => ({
+      ...prev,
+      [key]: { ...prev[key], tab },
     }))
   }
 
@@ -151,6 +165,17 @@ export default function WidgetSettings({ config, onChange, onClose }) {
                     )}
                   </span>
                 )}
+
+                {/* Tab selector */}
+                <select
+                  value={item.tab || 'life'}
+                  onChange={e => updateTab(key, e.target.value)}
+                  className="text-[11px] bg-white/10 border border-white/10 rounded-lg px-1.5 py-1 text-gray-300 focus:outline-none focus:border-blue-500 shrink-0 cursor-pointer"
+                >
+                  {TABS.map(t => (
+                    <option key={t.key} value={t.key}>{t.icon} {t.label}</option>
+                  ))}
+                </select>
 
                 {/* Edit icon */}
                 <button
