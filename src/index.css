@@ -2,6 +2,11 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Global base font size — scale up all rem-based sizes */
+html {
+  font-size: 18px;
+}
+
 /* ===== Animated Gradient Background ===== */
 @keyframes gradientShift {
   0% { background-position: 0% 50%; }
