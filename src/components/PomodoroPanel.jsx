@@ -84,9 +84,9 @@ export default function PomodoroPanel({ customTitle }) {
   const circumference = 2 * Math.PI * 54
 
   const colorMap = {
-    red: { text: 'text-red-500 dark:text-red-400', stroke: '#ef4444', bg: 'bg-red-500/10', activeBg: 'bg-red-500/20 text-red-500 dark:text-red-400' },
-    emerald: { text: 'text-emerald-500 dark:text-emerald-400', stroke: '#10b981', bg: 'bg-emerald-500/10', activeBg: 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400' },
-    blue: { text: 'text-blue-500 dark:text-blue-400', stroke: '#3b82f6', bg: 'bg-blue-500/10', activeBg: 'bg-blue-500/20 text-blue-500 dark:text-blue-400' },
+    red: { text: 'text-red-500 dark:text-red-400', stroke: '#ef4444', bg: 'bg-red-500/10', activeBg: 'bg-red-500/20 text-red-500 dark:text-red-400', btn: 'bg-red-600 hover:bg-red-500 hover:shadow-red-500/20' },
+    emerald: { text: 'text-emerald-500 dark:text-emerald-400', stroke: '#10b981', bg: 'bg-emerald-500/10', activeBg: 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400', btn: 'bg-emerald-600 hover:bg-emerald-500 hover:shadow-emerald-500/20' },
+    blue: { text: 'text-blue-500 dark:text-blue-400', stroke: '#3b82f6', bg: 'bg-blue-500/10', activeBg: 'bg-blue-500/20 text-blue-500 dark:text-blue-400', btn: 'bg-blue-600 hover:bg-blue-500 hover:shadow-blue-500/20' },
   }
   const c = colorMap[mode.color]
 
@@ -120,7 +120,7 @@ export default function PomodoroPanel({ customTitle }) {
 
       {/* Timer ring */}
       <div className="flex flex-col items-center">
-        <div className="relative w-32 h-32 mb-4">
+        <div className={`relative w-32 h-32 mb-4 ${timeLeft === 0 && !running ? 'animate-pulse' : ''}`}>
           <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
             <circle cx="60" cy="60" r="54" fill="none" stroke="currentColor" strokeWidth="4" className="text-gray-200/20 dark:text-white/5" />
             <circle
@@ -148,7 +148,7 @@ export default function PomodoroPanel({ customTitle }) {
             className={`px-6 py-2 rounded-xl text-sm font-medium text-white transition-all active:scale-95 ${
               running
                 ? 'bg-gray-500 hover:bg-gray-400'
-                : 'bg-red-600 hover:bg-red-500 hover:shadow-lg hover:shadow-red-500/20'
+                : `${c.btn} hover:shadow-lg`
             }`}
           >
             {running ? '暫停' : timeLeft === 0 ? '重新開始' : '開始'}

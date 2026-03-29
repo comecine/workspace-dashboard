@@ -14,6 +14,7 @@ export default function LinksPanel({ customTitle }) {
   const [synced, setSynced] = useState(false)
   const [dragIdx, setDragIdx] = useState(null)
   const [overIdx, setOverIdx] = useState(null)
+  const [confirmRemoveId, setConfirmRemoveId] = useState(null)
 
   // Load from D1 on mount, fallback to localStorage
   useEffect(() => {
@@ -161,7 +162,7 @@ export default function LinksPanel({ customTitle }) {
           onClick={() => { resetForm(); setShowAdd(!showAdd) }}
           className="text-xs text-gray-500 hover:text-orange-400 transition-all"
         >
-          {showAdd ? 'Cancel' : '+ Add'}
+          {showAdd ? '取消' : '+ 新增'}
         </button>
       </div>
 
@@ -205,7 +206,7 @@ export default function LinksPanel({ customTitle }) {
               onClick={editing ? handleUpdateLink : addLink}
               className="bg-orange-600 hover:bg-orange-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium transition-all hover:shadow-lg hover:shadow-orange-500/20 active:scale-95"
             >
-              {editing ? 'Save' : 'Add'}
+              {editing ? '儲存' : '新增'}
             </button>
           </div>
         </div>
@@ -249,19 +250,33 @@ export default function LinksPanel({ customTitle }) {
                   ✎
                 </button>
                 <button
-                  onClick={(e) => { e.preventDefault(); handleRemoveLink(link.id) }}
-                  className="w-5 h-5 rounded bg-black/30 text-gray-300 hover:text-red-400 text-[10px] flex items-center justify-center transition-all"
-                  title="Delete"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    if (confirmRemoveId === link.id) {
+                      handleRemoveLink(link.id)
+                      setConfirmRemoveId(null)
+                    } else {
+                      setConfirmRemoveId(link.id)
+                      setTimeout(() => setConfirmRemoveId(null), 3000)
+                    }
+                  }}
+                  className={`w-5 h-5 rounded text-[10px] flex items-center justify-center transition-all ${
+                    confirmRemoveId === link.id
+                      ? 'bg-red-500/50 text-white'
+                      : 'bg-black/30 text-gray-300 hover:text-red-400'
+                  }`}
+                  title={confirmRemoveId === link.id ? '再按一次確認刪除' : '刪除'}
                 >
-                  ✕
+                  {confirmRemoveId === link.id ? '!' : '✕'}
                 </button>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="text-center text-gray-400 dark:text-gray-600 text-sm py-6">
-          還沒有連結，點擊「+ Add」新增第一個連結
+        <div className="text-center text-gray-400 dark:text-gray-600 text-sm py-8">
+          <div className="text-3xl mb-2 opacity-30">🔗</div>
+          還沒有連結，點擊「+ 新增」加入第一個
         </div>
       )}
     </section>

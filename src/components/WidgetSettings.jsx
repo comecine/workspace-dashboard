@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { hasWidgetConfigApi, saveWidgetConfigToD1 } from '../api'
 
 export const TABS = [
@@ -63,6 +63,14 @@ export default function WidgetSettings({ config, onChange, onClose }) {
   )
   const [editingKey, setEditingKey] = useState(null)
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   const toggle = (key) => {
     setDraft(prev => ({
       ...prev,
@@ -126,6 +134,9 @@ export default function WidgetSettings({ config, onChange, onClose }) {
               >
                 {/* Toggle */}
                 <button
+                  role="switch"
+                  aria-checked={item.visible}
+                  aria-label={`${item.visible ? '隱藏' : '顯示'} ${item.title}`}
                   onClick={() => toggle(key)}
                   className={`w-10 h-6 rounded-full relative transition-all shrink-0 ${
                     item.visible
@@ -151,7 +162,7 @@ export default function WidgetSettings({ config, onChange, onClose }) {
                     onChange={e => updateTitle(key, e.target.value)}
                     onBlur={() => setEditingKey(null)}
                     onKeyDown={e => e.key === 'Enter' && setEditingKey(null)}
-                    className="flex-1 bg-white/10 border border-white/20 rounded-lg px-2 py-1 text-sm focus:outline-none focus:border-blue-500"
+                    className="flex-1 bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/20 rounded-lg px-2 py-1 text-sm focus:outline-none focus:border-blue-500"
                   />
                 ) : (
                   <span
@@ -170,7 +181,7 @@ export default function WidgetSettings({ config, onChange, onClose }) {
                 <select
                   value={item.tab || 'life'}
                   onChange={e => updateTab(key, e.target.value)}
-                  className="text-[11px] bg-white/10 border border-white/10 rounded-lg px-1.5 py-1 text-gray-300 focus:outline-none focus:border-blue-500 shrink-0 cursor-pointer"
+                  className="text-[11px] bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/10 rounded-lg px-1.5 py-1 text-gray-700 dark:text-gray-300 focus:outline-none focus:border-blue-500 shrink-0 cursor-pointer"
                 >
                   {TABS.map(t => (
                     <option key={t.key} value={t.key}>{t.icon} {t.label}</option>
@@ -193,7 +204,7 @@ export default function WidgetSettings({ config, onChange, onClose }) {
         <div className="flex gap-2 mt-5">
           <button
             onClick={resetAll}
-            className="flex-1 px-4 py-2 rounded-xl text-sm text-gray-400 hover:text-gray-200 bg-white/5 hover:bg-white/10 transition-all"
+            className="flex-1 px-4 py-2 rounded-xl text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-all"
           >
             恢復預設
           </button>

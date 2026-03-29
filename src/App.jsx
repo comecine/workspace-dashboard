@@ -371,10 +371,10 @@ function App() {
             ),
           }}
         </DraggableHeaderItems>
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={toggleLock}
-            className={`text-sm transition-colors hidden sm:block ${locked ? 'text-amber-500' : 'text-gray-500 hover:text-amber-500'}`}
+            className={`text-sm transition-colors ${locked ? 'text-amber-500' : 'text-gray-500 hover:text-amber-500'}`}
             title={locked ? '解鎖佈局' : '鎖定佈局'}
           >
             {locked ? '\uD83D\uDD12' : '\uD83D\uDD13'}
@@ -383,14 +383,14 @@ function App() {
             <>
               <button
                 onClick={resetLayout}
-                className="text-xs text-gray-500 hover:text-amber-500 transition-colors hidden sm:block"
+                className="text-xs text-gray-500 hover:text-amber-500 transition-colors"
                 title="重置佈局"
               >
                 &#8634;
               </button>
               <button
                 onClick={() => setShowSettings(true)}
-                className="text-sm text-gray-500 hover:text-amber-500 transition-colors hidden sm:block"
+                className="text-sm text-gray-500 hover:text-amber-500 transition-colors"
                 title="Widget 管理"
               >
                 &#9881;
@@ -436,14 +436,14 @@ function App() {
                 }}
                 className={`tab-item px-4 sm:px-5 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 ${
                   activeTab === tab.key
-                    ? 'tab-active bg-white/15 text-white shadow-lg'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                    ? 'tab-active bg-indigo-600/90 dark:bg-white/15 text-white shadow-lg'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5'
                 }`}
               >
                 <span>{tab.icon}</span>
                 <span className="hidden sm:inline">{tab.label}</span>
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                  activeTab === tab.key ? 'bg-white/20' : 'bg-white/5'
+                  activeTab === tab.key ? 'bg-white/20' : 'bg-black/5 dark:bg-white/5'
                 }`}>{count}</span>
               </button>
             )

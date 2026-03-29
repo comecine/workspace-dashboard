@@ -412,14 +412,14 @@ export default function StockPanel({ customTitle }) {
             onClick={addStock}
             className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all hover:shadow-lg hover:shadow-emerald-500/20 btn-glow active:scale-95"
           >
-            Add
+            新增
           </button>
         </div>
         {inputError && <div className="text-xs text-red-500 dark:text-red-400 mt-1">{inputError}</div>}
       </div>
 
       {watchlist.length > 0 ? (
-        <div className="mt-4 overflow-x-auto">
+        <div className="mt-4 overflow-x-auto scroll-hint-wrapper">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-300/20 dark:border-white/10 text-xs text-gray-500 dark:text-gray-500">

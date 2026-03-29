@@ -880,6 +880,35 @@
   opacity: 1 !important;
 }
 
+/* Disable card hover transform inside grid to prevent layout jitter */
+.react-grid-item .glass-card:hover {
+  transform: none;
+}
+
+/* ===== Scroll Hint Fade ===== */
+.scroll-hint-wrapper {
+  position: relative;
+}
+
+.scroll-hint-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 24px;
+  background: linear-gradient(to right, transparent, rgba(15, 23, 42, 0.6));
+  pointer-events: none;
+  opacity: 0.8;
+  border-radius: 0 12px 12px 0;
+}
+
+@media (min-width: 640px) {
+  .scroll-hint-wrapper::after {
+    display: none;
+  }
+}
+
 /* ===== Tab Bar ===== */
 .tab-bar {
   backdrop-filter: blur(20px);

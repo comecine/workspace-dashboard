@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { hasMonitorApi, fetchMonitorData } from '../api'
 
 function formatBytes(bytes) {
@@ -64,6 +64,14 @@ function UsageBar({ used, total, label, unit = '' }) {
 }
 
 function FullMonitor({ data, onClose }) {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   if (!data) return null
   const totalReqs = data.workers.reduce((sum, w) => sum + (w.stats?.requests || 0), 0)
   const totalErrors = data.workers.reduce((sum, w) => sum + (w.stats?.errors || 0), 0)
@@ -335,7 +343,7 @@ export default function MonitorPanel({ customTitle }) {
 
   return (
     <>
-      <div className="card-base p-4 h-full flex flex-col">
+      <div className="glass-card card-stripe card-stripe-orange rounded-xl p-4 sm:p-5 h-full flex flex-col">
         <div className="flex items-center justify-between mb-3">
           <h2 className="flex items-center gap-2 font-bold text-base">
             <span className="text-orange-400 glow-orange">🔥</span>
@@ -351,7 +359,15 @@ export default function MonitorPanel({ customTitle }) {
         </div>
 
         {loading && !data && (
-          <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">Loading...</div>
+          <div className="grid grid-cols-2 gap-2 flex-1">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="glass-inner rounded-xl p-3 animate-pulse">
+                <div className="h-6 w-6 bg-white/10 rounded mb-2" />
+                <div className="h-3 bg-white/10 rounded w-16 mb-1" />
+                <div className="h-4 bg-white/10 rounded w-20" />
+              </div>
+            ))}
+          </div>
         )}
 
         {error && !data && (
