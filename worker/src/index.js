@@ -89,6 +89,25 @@ export default {
         }
       }
 
+      // ===== SMS Alerts proxy (sms.wowcloud.tw) =====
+      if (path === '/api/sms-alerts' && method === 'GET') {
+        const SMS_CRON_SECRET = env.SMS_CRON_SECRET;
+        if (!SMS_CRON_SECRET) {
+          return Response.json({ error: 'SMS_CRON_SECRET not set' }, { status: 500, headers: corsHeaders });
+        }
+        const res = await fetch('https://sms.wowcloud.tw/api/public/alerts', {
+          headers: {
+            'x-cron-secret': SMS_CRON_SECRET,
+            'Accept': 'application/json',
+          },
+        });
+        const data = await res.text();
+        return new Response(data, {
+          status: res.status,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=300' },
+        });
+      }
+
       // ===== Widget Layout (D1) =====
       if (path === '/api/layout') {
         if (method === 'GET') {

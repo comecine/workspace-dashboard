@@ -300,6 +300,22 @@ export async function fetchMonitorData() {
   return data.success ? data : null
 }
 
+// ===== SMS Alerts API =====
+const getSmsAlertsApiUrl = () => WORKER_URL ? `${WORKER_URL}/api/sms-alerts` : ''
+
+export function hasSmsAlertsApi() {
+  return !!WORKER_URL
+}
+
+export async function fetchSmsAlerts() {
+  const base = getSmsAlertsApiUrl()
+  if (!base) return null
+  const res = await fetch(base)
+  if (!res.ok) throw new Error(`SMS Alerts API ${res.status}`)
+  const data = await res.json()
+  return data.success ? data : null
+}
+
 // ===== To-Do API (D1) =====
 const getTodosApiUrl = () => WORKER_URL ? `${WORKER_URL}/api/todos` : ''
 

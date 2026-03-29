@@ -11,6 +11,7 @@ export const DEFAULT_WIDGET_CONFIG = {
   water: { visible: true, title: '喝水提醒', icon: '💧', iconClass: 'text-sky-500 dark:text-sky-400' },
   translate: { visible: true, title: 'Translate', icon: 'A', iconClass: 'text-violet-500 dark:text-violet-400 glow-violet' },
   monitor: { visible: true, title: 'Monitor', icon: '🔥', iconClass: 'text-orange-500 dark:text-orange-400' },
+  'sms-alerts': { visible: true, title: 'SMS Alerts', icon: '📨', iconClass: 'text-amber-500 dark:text-amber-400' },
 }
 
 export function loadWidgetConfig() {
