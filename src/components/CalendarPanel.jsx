@@ -114,7 +114,7 @@ export default function CalendarPanel({ customTitle }) {
     <section className="glass-card card-stripe card-stripe-amber rounded-xl p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-          <span className="text-amber-500 dark:text-amber-400 text-xl">&#128197;</span> {customTitle || 'Calendar'}
+          <span className="text-amber-500 dark:text-amber-400 text-2xl">&#128197;</span> {customTitle || 'Calendar'}
         </h2>
         <div className="flex items-center gap-3">
           <button

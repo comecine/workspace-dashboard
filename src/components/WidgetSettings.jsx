@@ -150,7 +150,7 @@ export default function WidgetSettings({ config, onChange, onClose }) {
                 </button>
 
                 {/* Icon */}
-                <span className={`text-xl w-7 text-center shrink-0 ${def.iconClass}`}>
+                <span className={`text-2xl w-8 text-center shrink-0 ${def.iconClass}`}>
                   {def.icon}
                 </span>
 

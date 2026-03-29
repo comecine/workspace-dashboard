@@ -119,7 +119,7 @@ export default function WaterPanel({ customTitle }) {
     <section className="glass-card card-stripe card-stripe-sky rounded-xl p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-          <span className="text-sky-500 dark:text-sky-400 text-xl">💧</span> {customTitle || '喝水提醒'}
+          <span className="text-sky-500 dark:text-sky-400 text-2xl">💧</span> {customTitle || '喝水提醒'}
         </h2>
         <select
           value={interval}
@@ -191,7 +191,7 @@ export default function WaterPanel({ customTitle }) {
             {Array.from({ length: DAILY_GOAL }).map((_, i) => (
               <span
                 key={i}
-                className={`text-sm transition-all duration-300 ${i < cups ? 'scale-110' : 'opacity-20 scale-90 grayscale'}`}
+                className={`text-lg transition-all duration-300 ${i < cups ? 'scale-110' : 'opacity-20 scale-90 grayscale'}`}
                 style={i < cups ? { transitionDelay: `${i * 50}ms` } : {}}
               >
                 💧

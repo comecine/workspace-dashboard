@@ -94,7 +94,7 @@ export default function PomodoroPanel({ customTitle }) {
     <section className="glass-card card-stripe card-stripe-red rounded-xl p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-          <span className="text-red-500 dark:text-red-400 text-xl">🍅</span> {customTitle || 'Pomodoro'}
+          <span className="text-red-500 dark:text-red-400 text-2xl">🍅</span> {customTitle || 'Pomodoro'}
         </h2>
         <div className="flex items-center gap-1.5">
           <div className="flex gap-0.5">

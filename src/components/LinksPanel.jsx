@@ -156,7 +156,7 @@ export default function LinksPanel({ customTitle }) {
     <section className="glass-card card-stripe card-stripe-orange rounded-xl p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-          <span className="text-orange-400 text-xl glow-orange">@</span> {customTitle || 'Quick Links'}
+          <span className="text-orange-400 text-2xl glow-orange">@</span> {customTitle || 'Quick Links'}
         </h2>
         <button
           onClick={() => { resetForm(); setShowAdd(!showAdd) }}
@@ -231,7 +231,7 @@ export default function LinksPanel({ customTitle }) {
                 rel="noopener noreferrer"
                 className="glass-inner rounded-lg p-3 flex flex-col items-center gap-2 hover:bg-white/10 dark:hover:bg-white/[0.06] hover:scale-[1.03] transition-all block text-center"
               >
-                <div className="link-icon w-10 h-10 rounded-xl bg-orange-600/15 dark:bg-orange-500/15 text-orange-500 dark:text-orange-400 flex items-center justify-center text-sm font-bold">
+                <div className="link-icon w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 text-white flex items-center justify-center text-lg font-bold shadow-lg shadow-orange-500/20">
                   {link.icon}
                 </div>
                 <div>

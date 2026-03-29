@@ -96,7 +96,7 @@ export default function TranslatePanel({ customTitle }) {
     <section className="glass-card card-stripe card-stripe-violet rounded-xl p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-          <span className="text-violet-500 dark:text-violet-400 text-xl glow-violet">A</span> {customTitle || 'Translate'}
+          <span className="text-violet-500 dark:text-violet-400 text-2xl glow-violet">A</span> {customTitle || 'Translate'}
         </h2>
         <div className="flex items-center gap-2">
           <button

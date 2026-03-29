@@ -34,7 +34,7 @@ function StatusDot({ ok }) {
 function MiniCard({ icon, title, value, sub, ok = true }) {
   return (
     <div className="glass-inner rounded-xl p-3 flex items-center gap-3">
-      <span className="text-2xl">{icon}</span>
+      <span className="text-3xl">{icon}</span>
       <div className="flex-1 min-w-0">
         <div className="text-xs text-gray-400 truncate">{title}</div>
         <div className="text-sm font-bold flex items-center gap-1.5">

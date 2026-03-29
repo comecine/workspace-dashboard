@@ -88,7 +88,7 @@ export default function TodoPanel({ customTitle }) {
     <section className="glass-card card-stripe card-stripe-rose rounded-xl p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-          <span className="text-rose-500 dark:text-rose-400 text-xl">✅</span> {customTitle || 'To-Do'}
+          <span className="text-rose-500 dark:text-rose-400 text-2xl">✅</span> {customTitle || 'To-Do'}
         </h2>
         {todos.length > 0 && (
           <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">

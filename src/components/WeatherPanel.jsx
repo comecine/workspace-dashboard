@@ -100,7 +100,7 @@ export default function WeatherPanel() {
     <section className="glass-card card-stripe card-stripe-cyan rounded-xl p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-          <span className="text-cyan-500 dark:text-cyan-400 text-xl">🌤️</span> Weather
+          <span className="text-cyan-500 dark:text-cyan-400 text-2xl">🌤️</span> Weather
         </h2>
         <select
           value={cityIdx}
