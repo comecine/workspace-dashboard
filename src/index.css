@@ -745,7 +745,7 @@
 }
 
 .widget-content > section {
-  height: 100%;
+  min-height: 100%;
   overflow: auto;
 }
 

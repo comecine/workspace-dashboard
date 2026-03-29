@@ -30,9 +30,9 @@ const ALL_LAYOUT_ITEMS = {
   links:       { x: 0, y: 0, w: 2, h: 5, minW: 1, minH: 2 },
   calendar:    { x: 2, y: 0, w: 2, h: 5, minW: 1, minH: 3 },
   currency:    { x: 2, y: 0, w: 2, h: 5, minW: 1, minH: 3 },
-  pomodoro:    { x: 0, y: 5, w: 1, h: 5, minW: 1, minH: 4 },
+  pomodoro:    { x: 0, y: 5, w: 1, h: 4, minW: 1, minH: 3 },
   todo:        { x: 1, y: 5, w: 1, h: 5, minW: 1, minH: 3 },
-  water:       { x: 2, y: 0, w: 1, h: 5, minW: 1, minH: 3 },
+  water:       { x: 2, y: 0, w: 1, h: 4, minW: 1, minH: 3 },
   translate:   { x: 2, y: 5, w: 2, h: 5, minW: 1, minH: 3 },
   monitor:     { x: 0, y: 0, w: 2, h: 5, minW: 1, minH: 3 },
   'sms-alerts':{ x: 2, y: 0, w: 2, h: 5, minW: 1, minH: 3 },
@@ -179,7 +179,7 @@ function App() {
   })
   const [tabLayouts, setTabLayouts] = useState(() => {
     try {
-      const LAYOUT_VERSION = 9
+      const LAYOUT_VERSION = 10
       const savedVersion = parseInt(localStorage.getItem('layout_version') || '0')
       if (savedVersion < LAYOUT_VERSION) {
         localStorage.setItem('layout_version', String(LAYOUT_VERSION))
