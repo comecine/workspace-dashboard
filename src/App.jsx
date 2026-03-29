@@ -451,7 +451,7 @@ function App() {
         </div>
       </div>
 
-      <main className="relative z-10 p-3 sm:p-4 md:p-6" key={activeTab}>
+      <main className="relative z-10 p-3 sm:p-4 md:p-6">
         {layoutReady && (
           <div className="tab-content-enter">
             <WidgetGrid layouts={layouts} onLayoutChange={onLayoutChange} onResize={onWidgetResize} locked={locked} widgetConfig={widgetConfig} activeTab={activeTab} />
