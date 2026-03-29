@@ -136,6 +136,7 @@ function WidgetGrid({ layouts, onLayoutChange, onResize, locked, widgetConfig, a
           containerPadding={[0, 0]}
           onLayoutChange={onLayoutChange}
           draggableHandle=".widget-drag-handle"
+          draggableCancel="input, button, select, textarea, a, .glass-inner"
           resizeHandles={locked ? [] : ['se']}
           isDraggable={!locked}
           isResizable={!locked}
