@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 
 const INTERVALS = [
+  { label: '15 分鐘', value: 15 },
   { label: '30 分鐘', value: 30 },
   { label: '45 分鐘', value: 45 },
   { label: '60 分鐘', value: 60 },
@@ -46,6 +47,44 @@ export default function WaterPanel({ customTitle }) {
   })
 
   const timerRef = useRef(null)
+  const cupsRef = useRef(cups)
+  useEffect(() => { cupsRef.current = cups }, [cups])
+
+  const playBeep = useCallback(() => {
+    try {
+      const ctx = new AudioContext()
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.type = 'sine'
+      // 三聲短嗶：880Hz → 1046Hz → 1318Hz
+      const times = [0, 0.3, 0.6]
+      const freqs = [880, 1046, 1318]
+      times.forEach((t, i) => {
+        osc.frequency.setValueAtTime(freqs[i], ctx.currentTime + t)
+        gain.gain.setValueAtTime(0.3, ctx.currentTime + t)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.25)
+      })
+      osc.start(ctx.currentTime)
+      osc.stop(ctx.currentTime + 0.9)
+    } catch (_) {}
+  }, [])
+
+  const sendNotification = useCallback(() => {
+    // 用 ref 取最新 cups 值，避免 stale closure
+    if (Notification.permission === 'granted') {
+      new Notification('💧 該喝水了！', {
+        body: `你今天已經喝了 ${cupsRef.current} 杯，目標 ${DAILY_GOAL} 杯`,
+        tag: 'water-reminder',
+      })
+    }
+    playBeep()
+  }, [playBeep])
+
+  // 用 ref 確保 timer callback 永遠拿到最新的 sendNotification
+  const sendNotificationRef = useRef(sendNotification)
+  useEffect(() => { sendNotificationRef.current = sendNotification }, [sendNotification])
 
   // Save cups
   useEffect(() => {
@@ -69,7 +108,7 @@ export default function WaterPanel({ customTitle }) {
       setSecondsLeft(prev => {
         if (prev <= 1) {
           setRunning(false)
-          sendNotification()
+          sendNotificationRef.current()
           return 0
         }
         return prev - 1
@@ -77,15 +116,6 @@ export default function WaterPanel({ customTitle }) {
     }, 1000)
     return () => window.clearInterval(timerRef.current)
   }, [running])
-
-  const sendNotification = useCallback(() => {
-    if (Notification.permission === 'granted') {
-      new Notification('💧 該喝水了！', {
-        body: `你今天已經喝了 ${cups} 杯，目標 ${DAILY_GOAL} 杯`,
-        tag: 'water-reminder',
-      })
-    }
-  }, [cups])
 
   const startTimer = () => {
     if (Notification.permission === 'default') {
