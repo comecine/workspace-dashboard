@@ -425,7 +425,7 @@ export default function StockPanel({ customTitle }) {
               <tr className="border-b border-gray-300/20 dark:border-white/10 text-xs text-gray-500 dark:text-gray-500">
                 <th className="py-2 px-1 w-6" />
                 <th className="py-2 px-2 text-left font-medium w-[20%]">股票</th>
-                <th className="py-2 px-2 text-right font-medium w-[15%]">現價</th>
+                <th className="py-2 px-2 text-right font-medium w-[10%]">現價</th>
                 <th className="py-2 px-2 text-right font-medium w-[15%]">漲跌</th>
                 <th className="py-2 px-2 text-right font-medium w-[15%]">目標價</th>
                 <th className="py-2 px-2 text-left font-medium">備註</th>
